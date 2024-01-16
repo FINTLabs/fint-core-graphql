@@ -67,7 +67,6 @@ public class QueryConfig {
     public GraphQLObjectType getOrCreateObjectType(FintObject fintObject) {
         String packageName = fintObject.getPackageName();
         if (processedTypes.containsKey(packageName)) {
-            log.info("Using processed type: {}", fintObject.getName());
             return processedTypes.get(packageName);
         }
 
@@ -77,23 +76,18 @@ public class QueryConfig {
     }
 
     private GraphQLObjectType createObjectType(FintObject fintObject) {
-        log.info("Creating object type: {}", fintObject.getName());
         GraphQLObjectType.Builder objectTypeBuilder = GraphQLObjectType.newObject()
                 .name(fintObject.getName());
 
         addFields(fintObject, objectTypeBuilder);
         addRelations(fintObject, objectTypeBuilder);
 
-        log.info("Done creating object type: {}", fintObject.getName());
         return objectTypeBuilder.build();
     }
 
     private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
         fintObject.getRelations().forEach(relation -> {
-            if (relationIsEmpty(relation)) {
-                log.info("Relation is empty: {}", relation.relationName());
-            } else {
-                log.info("Relation isnt empty: {}", relation.relationName());
+            if (!relationIsEmpty(relation)) {
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
                         .type(GraphQLTypeReference.typeRef(reflectionService.findFintObject(relation.packageName()).getName()))
