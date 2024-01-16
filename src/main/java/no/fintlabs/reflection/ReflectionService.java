@@ -3,6 +3,7 @@ package no.fintlabs.reflection;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.model.FintMainObject;
+import no.fintlabs.reflection.model.FintObject;
 import org.reflections.Reflections;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +16,12 @@ import java.util.stream.Collectors;
 public class ReflectionService {
 
     private final Map<String, FintMainObject> fintMainObjects;
+    private final Map<String, FintObject> fintObjects;
 
     public ReflectionService() {
         Reflections reflections = new Reflections("no.fint.model");
         fintMainObjects = createFintMainObjects(reflections);
+        fintObjects = createFintObjects(reflections);
         fintMainObjects.forEach((k, v) -> log.info("{}", v));
     }
 
@@ -29,6 +32,16 @@ public class ReflectionService {
                 .collect(Collectors.toMap(
                         Class::getName,
                         FintMainObject::new));
+    }
+
+    private Map<String, FintObject> createFintObjects(Reflections reflections) {
+        return reflections
+                .getSubTypesOf(no.fint.model.FintObject.class)
+                .stream()
+                .filter(clazz -> !fintMainObjects.containsKey(clazz.getName()))
+                .collect(Collectors.toMap(
+                        Class::getName,
+                        FintObject::new));
     }
 
 }
