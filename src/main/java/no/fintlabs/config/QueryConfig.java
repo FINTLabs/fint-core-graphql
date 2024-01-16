@@ -1,20 +1,20 @@
 package no.fintlabs.config;
 
 import graphql.Scalars;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLObjectType;
+import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintMainObject;
 import no.fintlabs.reflection.model.FintObject;
+import no.fintlabs.reflection.model.FintRelation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,6 +31,14 @@ public class QueryConfig {
                 .name("Query")
                 .fields(getFieldDefinitions())
                 .build();
+    }
+
+    @Bean("additionalTypes")
+    public Set<GraphQLType> buildAdditionalTypes() {
+        return reflectionService.getFintObjects().values().stream()
+                .filter(FintObject::shouldBeProcessed)
+                .map(this::getOrCreateObjectType)
+                .collect(Collectors.toSet());
     }
 
     private List<GraphQLFieldDefinition> getFieldDefinitions() {
@@ -58,7 +66,6 @@ public class QueryConfig {
 
     public GraphQLObjectType getOrCreateObjectType(FintObject fintObject) {
         String packageName = fintObject.getPackageName();
-        log.info("Package name: {} for type: {}", packageName, fintObject.getName());
         if (processedTypes.containsKey(packageName)) {
             log.info("Using processed type: {}", fintObject.getName());
             return processedTypes.get(packageName);
@@ -75,8 +82,32 @@ public class QueryConfig {
                 .name(fintObject.getName());
 
         addFields(fintObject, objectTypeBuilder);
+        addRelations(fintObject, objectTypeBuilder);
 
+        log.info("Done creating object type: {}", fintObject.getName());
         return objectTypeBuilder.build();
+    }
+
+    private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
+        fintObject.getRelations().forEach(relation -> {
+            if (relationIsEmpty(relation)) {
+                log.info("Relation is empty: {}", relation.relationName());
+            } else {
+                log.info("Relation isnt empty: {}", relation.relationName());
+                objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
+                        .name(relation.relationName().toLowerCase())
+                        .type(GraphQLTypeReference.typeRef(reflectionService.findFintObject(relation.packageName()).getName()))
+                        .build());
+            }
+        });
+    }
+
+    private boolean relationIsEmpty(FintRelation relation) {
+        FintObject fintObject = reflectionService.findFintObject(relation.packageName());
+        if (fintObject.getFields().isEmpty()) {
+            return fintObject.getRelations().isEmpty();
+        }
+        return false;
     }
 
     private void addFields(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
@@ -85,7 +116,7 @@ public class QueryConfig {
                     .name(field.getName());
 
             if (typeIsFromJava(field.getType())) {
-                // TODO: Handle different Java types
+                // TODO: CT-1134: Handle other types than String
                 objectTypeBuilder.field(fieldBuilder.type(Scalars.GraphQLString).build());
             } else {
                 objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.findFintObject(field.getType().getName()))));
