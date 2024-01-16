@@ -58,6 +58,7 @@ public class QueryConfig {
 
     public GraphQLObjectType getOrCreateObjectType(FintObject fintObject) {
         String packageName = fintObject.getPackageName();
+        log.info("Package name: {} for type: {}", packageName, fintObject.getName());
         if (processedTypes.containsKey(packageName)) {
             log.info("Using processed type: {}", fintObject.getName());
             return processedTypes.get(packageName);

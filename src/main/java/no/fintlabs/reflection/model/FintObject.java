@@ -16,7 +16,7 @@ public class FintObject {
 
     public FintObject(Class<?> clazz) {
         this.name = clazz.getSimpleName();
-        this.packageName = clazz.getPackage().getName();
+        this.packageName = clazz.getName();
         this.fields = getAllFields(clazz);
     }
 
