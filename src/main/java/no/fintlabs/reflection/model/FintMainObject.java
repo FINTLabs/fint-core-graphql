@@ -1,16 +1,28 @@
 package no.fintlabs.reflection.model;
 
-import lombok.Data;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
 
-@Data
-public class FintMainObject {
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
 
-    private final String name;
-    private final String packageName;
+public class FintMainObject extends FintObject {
+
+    private Set<String> identificatorFields;
 
     public FintMainObject(Class<?> clazz) {
-        this.name = clazz.getSimpleName();
-        this.packageName = clazz.getPackage().getName();
+        super(clazz);
+        identificatorFields = setIdentificatorFields();
+    }
+
+    private Set<String> setIdentificatorFields() {
+        Set<String> identifikatorFields = new HashSet<>();
+        for (Field field : super.getFields()) {
+            if (field.getType().equals(Identifikator.class)) {
+                identifikatorFields.add(field.getName());
+            }
+        }
+        return identifikatorFields;
     }
 
 }
