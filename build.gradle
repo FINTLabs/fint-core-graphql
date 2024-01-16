@@ -29,6 +29,9 @@ dependencies {
 
     implementation 'no.fint:fint-utdanning-model-java:3.16.1-rc-2'
     implementation 'no.fint:fint-administrasjon-model-java:3.16.1-rc-2'
+    implementation 'no.fint:fint-arkiv-model-java:3.16.1-rc-2'
+    implementation 'no.fint:fint-okonomi-model-java:3.16.1-rc-2'
+    implementation 'no.fint:fint-personvern-model-java:3.16.1-rc-2'
 
     implementation 'com.graphql-java-kickstart:graphql-spring-boot-starter:15.0.0'
     implementation 'com.graphql-java:graphql-java:21.3'
