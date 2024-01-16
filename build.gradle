@@ -27,6 +27,8 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+    implementation 'no.fint:fint-utdanning-model-java:3.16.1-rc-2'
+
     implementation 'com.graphql-java-kickstart:graphql-spring-boot-starter:15.0.0'
     implementation 'com.graphql-java:graphql-java:21.3'
     implementation 'org.reflections:reflections:0.10.2'
