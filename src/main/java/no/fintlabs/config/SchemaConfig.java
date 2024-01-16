@@ -1,6 +1,7 @@
 package no.fintlabs.config;
 
 import graphql.GraphQL;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +15,9 @@ public class SchemaConfig {
     }
 
     @Bean
-    public GraphQLSchema graphQLSchema() {
+    public GraphQLSchema graphQLSchema(GraphQLObjectType query) {
         return GraphQLSchema.newSchema()
+                .query(query)
                 .build();
     }
 
