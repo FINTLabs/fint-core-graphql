@@ -43,7 +43,7 @@ public class QueryConfig {
         return GraphQLFieldDefinition.newFieldDefinition()
                 .name(fintMainObject.getName())
                 .arguments(buildArguments(fintMainObject))
-                .type(Scalars.GraphQLString)
+                .type(getOrCreateObjectType(fintMainObject))
                 .build();
     }
 
@@ -59,6 +59,7 @@ public class QueryConfig {
     public GraphQLObjectType getOrCreateObjectType(FintObject fintObject) {
         String packageName = fintObject.getPackageName();
         if (processedTypes.containsKey(packageName)) {
+            log.info("Using processed type: {}", fintObject.getName());
             return processedTypes.get(packageName);
         }
 
@@ -68,6 +69,7 @@ public class QueryConfig {
     }
 
     private GraphQLObjectType createObjectType(FintObject fintObject) {
+        log.info("Creating object type: {}", fintObject.getName());
         GraphQLObjectType.Builder objectTypeBuilder = GraphQLObjectType.newObject()
                 .name(fintObject.getName());
 
@@ -85,7 +87,7 @@ public class QueryConfig {
                 // TODO: Handle different Java types
                 objectTypeBuilder.field(fieldBuilder.type(Scalars.GraphQLString).build());
             } else {
-                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.findFintObject(field.getName()))));
+                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.findFintObject(field.getType().getName()))));
             }
         });
     }

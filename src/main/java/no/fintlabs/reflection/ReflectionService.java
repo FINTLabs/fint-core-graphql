@@ -22,7 +22,7 @@ public class ReflectionService {
         Reflections reflections = new Reflections("no.fint.model");
         fintMainObjects = createFintMainObjects(reflections);
         fintObjects = createFintObjects(reflections);
-        fintMainObjects.forEach((k, v) -> log.info("{}", v));
+//        fintMainObjects.forEach((k, v) -> log.info("{}", v));
     }
 
     public FintObject findFintObject(String name) {
