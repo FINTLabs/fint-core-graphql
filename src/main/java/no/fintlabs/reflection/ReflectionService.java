@@ -25,6 +25,16 @@ public class ReflectionService {
         fintMainObjects.forEach((k, v) -> log.info("{}", v));
     }
 
+    public FintObject findFintObject(String name) {
+        if (fintMainObjects.containsKey(name)) {
+            return fintMainObjects.get(name);
+        } else if (fintObjects.containsKey(name)) {
+            return fintObjects.get(name);
+        } else {
+            throw new IllegalArgumentException("Unknown fint object: " + name);
+        }
+    }
+
     private Map<String, FintMainObject> createFintMainObjects(Reflections reflections) {
         return reflections
                 .getSubTypesOf(no.fint.model.FintMainObject.class)

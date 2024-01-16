@@ -1,6 +1,5 @@
 package no.fintlabs.reflection.model;
 
-import lombok.Data;
 import lombok.Getter;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 
