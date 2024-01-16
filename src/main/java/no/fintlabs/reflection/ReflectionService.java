@@ -37,8 +37,8 @@ public class ReflectionService {
         }
     }
 
-    private boolean hasUniqueName(String name) {
-        return nameCounts.getOrDefault(name, 0) == 1;
+    private boolean hasUniqueName(Class<?> clazz) {
+        return nameCounts.getOrDefault(clazz.getSimpleName(), 0) == 1;
     }
 
     private Map<String, FintMainObject> createFintMainObjects(Reflections reflections) {
@@ -47,7 +47,7 @@ public class ReflectionService {
                 .stream()
                 .collect(Collectors.toMap(
                         Class::getName,
-                        clazz -> new FintMainObject(clazz, hasUniqueName(clazz.getSimpleName()))));
+                        clazz -> new FintMainObject(clazz, hasUniqueName(clazz))));
     }
 
     private Map<String, FintObject> createFintObjects(Reflections reflections) {
@@ -57,7 +57,7 @@ public class ReflectionService {
                 .filter(clazz -> !fintMainObjects.containsKey(clazz.getName()))
                 .collect(Collectors.toMap(
                         Class::getName,
-                        clazz -> new FintObject(clazz, hasUniqueName(clazz.getSimpleName()))));
+                        clazz -> new FintObject(clazz, hasUniqueName(clazz))));
     }
 
     private void gatherSimpleNameCounts(Reflections reflections) {
