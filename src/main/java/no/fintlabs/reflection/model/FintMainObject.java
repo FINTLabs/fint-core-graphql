@@ -2,6 +2,7 @@ package no.fintlabs.reflection.model;
 
 import lombok.Getter;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.fintlabs.reflection.ReflectionService;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -12,8 +13,8 @@ public class FintMainObject extends FintObject {
 
     private final Set<String> identificatorFields;
 
-    public FintMainObject(Class<?> clazz) {
-        super(clazz);
+    public FintMainObject(Class<?> clazz, boolean hasUniqueName) {
+        super(clazz, hasUniqueName);
         identificatorFields = setIdentificatorFields();
     }
 
