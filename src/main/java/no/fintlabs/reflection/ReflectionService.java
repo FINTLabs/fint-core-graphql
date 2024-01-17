@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.model.FintObject;
 import org.reflections.Reflections;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -22,6 +21,14 @@ public class ReflectionService {
 
     public ReflectionService() {
         fintObjects = createFintObjects();
+    }
+
+    public FintObject getFintObject(String name) {
+        if (fintObjects.containsKey(name)) {
+            return fintObjects.get(name);
+        } else {
+            throw new RuntimeException("Could not find FintObject with name " + name);
+        }
     }
 
     private Map<String, FintObject> createFintObjects() {

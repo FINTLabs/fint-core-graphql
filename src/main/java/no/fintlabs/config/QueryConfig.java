@@ -92,14 +92,14 @@ public class QueryConfig {
             if (!relationIsEmpty(relation)) {
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
-                        .type(GraphQLTypeReference.typeRef(getFintObject(relation.packageName()).getName()))
+                        .type(GraphQLTypeReference.typeRef(reflectionService.getFintObject(relation.packageName()).getName()))
                         .build());
             }
         });
     }
 
     private boolean relationIsEmpty(FintRelation relation) {
-        FintObject fintObject = getFintObject(relation.packageName());
+        FintObject fintObject = reflectionService.getFintObject(relation.packageName());
         if (fintObject.getFields().isEmpty()) {
             return fintObject.getRelations().isEmpty();
         }
@@ -114,7 +114,7 @@ public class QueryConfig {
             if (typeIsFromJava(field.getType())) {
                 objectTypeBuilder.field(fieldBuilder.type(determineGraphQLType(field.getType())).build());
             } else {
-                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(getFintObject(field.getType().getName()))));
+                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.getFintObject(field.getType().getName()))));
             }
         });
     }
@@ -133,14 +133,6 @@ public class QueryConfig {
 
     private boolean typeIsFromJava(Class<?> clazz) {
         return clazz.getClassLoader() == null || clazz.getPackage().getName().startsWith("java") || clazz.getPackage().getName().startsWith("javax");
-    }
-
-    private FintObject getFintObject(String name) {
-        if (reflectionService.getFintObjects().containsKey(name)) {
-            return reflectionService.getFintObjects().get(name);
-        } else {
-            throw new RuntimeException("Could not find FintObject with name " + name);
-        }
     }
 
 }
