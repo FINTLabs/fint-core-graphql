@@ -110,12 +110,23 @@ public class QueryConfig {
                     .name(field.getName());
 
             if (typeIsFromJava(field.getType())) {
-                // TODO: CT-1134: Handle other types than String
-                objectTypeBuilder.field(fieldBuilder.type(Scalars.GraphQLString).build());
+                objectTypeBuilder.field(fieldBuilder.type(determineGraphQLType(field.getType())).build());
             } else {
                 objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.findFintObject(field.getType().getName()))));
             }
         });
+    }
+
+    private GraphQLScalarType determineGraphQLType(Class<?> fieldType) {
+        if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
+            return Scalars.GraphQLBoolean;
+        } else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType)) {
+            return Scalars.GraphQLFloat;
+        } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
+            return Scalars.GraphQLInt;
+        } else {
+            return Scalars.GraphQLString;
+        }
     }
 
     private boolean typeIsFromJava(Class<?> clazz) {
