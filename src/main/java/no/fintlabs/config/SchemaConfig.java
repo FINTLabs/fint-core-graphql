@@ -19,7 +19,8 @@ public class SchemaConfig {
     }
 
     @Bean
-    public GraphQLSchema graphQLSchema(GraphQLObjectType query, @Qualifier("additionalTypes") Set<GraphQLType> additionalTypes) {
+    public GraphQLSchema graphQLSchema(@Qualifier("query") GraphQLObjectType query,
+                                       @Qualifier("additionalTypes") Set<GraphQLType> additionalTypes) {
         return GraphQLSchema.newSchema()
                 .query(query)
                 .additionalTypes(additionalTypes)

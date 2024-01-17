@@ -24,7 +24,7 @@ public class QueryConfig {
     private final Map<String, GraphQLObjectType> processedTypes = new HashMap<>();
     private final ReflectionService reflectionService;
 
-    @Bean
+    @Bean("query")
     public GraphQLObjectType buildQuery() {
         return GraphQLObjectType.newObject()
                 .name("Query")
