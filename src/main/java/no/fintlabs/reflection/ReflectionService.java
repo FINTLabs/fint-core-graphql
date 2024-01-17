@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.model.FintObject;
 import org.reflections.Reflections;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -20,12 +21,11 @@ public class ReflectionService {
     private final Map<String, Integer> nameCounts = new HashMap<>();
 
     public ReflectionService() {
-        Reflections reflections = new Reflections("no.fint.model");
-        fintObjects = createFintObjects(reflections);
+        fintObjects = createFintObjects();
     }
 
-    private Map<String, FintObject> createFintObjects(Reflections reflections) {
-        Set<Class<? extends no.fint.model.FintObject>> subTypesOf = reflections
+    private Map<String, FintObject> createFintObjects() {
+        Set<Class<? extends no.fint.model.FintObject>> subTypesOf = new Reflections("no.fint.model")
                 .getSubTypesOf(no.fint.model.FintObject.class);
         gatherNameCounts(subTypesOf);
         return mapToFintObjects(subTypesOf);
