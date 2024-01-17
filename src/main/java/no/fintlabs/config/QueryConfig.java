@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QueryConfig {
 
+    private final Map<Integer, FintObject> fintObjectRelation = new HashMap<>();
     private final Map<String, GraphQLObjectType> processedTypes = new HashMap<>();
     private final ReflectionService reflectionService;
 
@@ -39,6 +40,11 @@ public class QueryConfig {
                 .filter(fintObject -> !fintObject.isMainObject())
                 .map(this::getOrCreateObjectType)
                 .collect(Collectors.toSet());
+    }
+
+    @Bean
+    public Map<Integer, FintObject> hashCodeFintObjectMap() {
+        return fintObjectRelation;
     }
 
     private List<GraphQLFieldDefinition> getFieldDefinitions() {
@@ -84,7 +90,10 @@ public class QueryConfig {
         addFields(fintObject, objectTypeBuilder);
         addRelations(fintObject, objectTypeBuilder);
 
-        return objectTypeBuilder.build();
+        GraphQLObjectType graphQLObjectType = objectTypeBuilder.build();
+        fintObjectRelation.put(graphQLObjectType.hashCode(), fintObject);
+
+        return graphQLObjectType;
     }
 
     private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {

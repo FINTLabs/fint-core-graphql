@@ -16,6 +16,8 @@ public class FintObject {
     private final String name;
     private final String packageName;
     private final String domainName;
+    private final String componentUrl;
+    private final String resourceUrl;
     private final List<Field> fields;
     private final List<FintRelation> relations;
     private final Set<String> identificatorFields;
@@ -25,9 +27,20 @@ public class FintObject {
         this.domainName = setDomainName();
         this.name = setName(clazz, hasUniqueName);
         this.fields = getAllFields(clazz);
+        this.componentUrl = setComponentUrl(clazz);
+        this.resourceUrl = setResourceUrl(clazz);
         this.relations = getAllRelations(clazz);
         this.isMainObject = setIsMainObject(clazz);
         this.identificatorFields = setIdentificatorFields();
+    }
+
+    private String setResourceUrl(Class<?> clazz) {
+        return "/" + clazz.getSimpleName().toLowerCase();
+    }
+
+    private String setComponentUrl(Class<?> clazz) {
+        String[] parts = clazz.getName().split("\\.");
+        return "/" + String.join("/", Arrays.copyOfRange(parts, 3, 5));
     }
 
     private boolean setIsMainObject(Class<?> clazz) {
