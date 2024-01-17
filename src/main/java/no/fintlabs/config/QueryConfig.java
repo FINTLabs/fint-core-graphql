@@ -5,7 +5,6 @@ import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.ReflectionService;
-import no.fintlabs.reflection.model.FintMainObject;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
 import org.springframework.context.annotation.Bean;
@@ -37,26 +36,29 @@ public class QueryConfig {
     public Set<GraphQLType> buildAdditionalTypes() {
         return reflectionService.getFintObjects().values().stream()
                 .filter(FintObject::shouldBeProcessed)
+                .filter(fintObject -> !fintObject.isMainObject())
                 .map(this::getOrCreateObjectType)
                 .collect(Collectors.toSet());
     }
 
     private List<GraphQLFieldDefinition> getFieldDefinitions() {
-        return reflectionService.getFintMainObjects().values().stream()
+        return reflectionService.getFintObjects().values().stream()
+                .filter(FintObject::isMainObject)
+                .filter(FintObject::shouldBeProcessed)
                 .map(this::buildFieldDefinition)
                 .collect(Collectors.toList());
     }
 
-    private GraphQLFieldDefinition buildFieldDefinition(FintMainObject fintMainObject) {
+    private GraphQLFieldDefinition buildFieldDefinition(FintObject fintObject) {
         return GraphQLFieldDefinition.newFieldDefinition()
-                .name(fintMainObject.getName())
-                .arguments(buildArguments(fintMainObject))
-                .type(getOrCreateObjectType(fintMainObject))
+                .name(fintObject.getName())
+                .arguments(buildArguments(fintObject))
+                .type(getOrCreateObjectType(fintObject))
                 .build();
     }
 
-    private List<GraphQLArgument> buildArguments(FintMainObject fintMainObject) {
-        return fintMainObject.getIdentificatorFields().stream()
+    private List<GraphQLArgument> buildArguments(FintObject fintObject) {
+        return fintObject.getIdentificatorFields().stream()
                 .map(field -> GraphQLArgument.newArgument()
                         .name(field)
                         .type(Scalars.GraphQLString)
@@ -90,14 +92,14 @@ public class QueryConfig {
             if (!relationIsEmpty(relation)) {
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
-                        .type(GraphQLTypeReference.typeRef(reflectionService.findFintObject(relation.packageName()).getName()))
+                        .type(GraphQLTypeReference.typeRef(getFintObject(relation.packageName()).getName()))
                         .build());
             }
         });
     }
 
     private boolean relationIsEmpty(FintRelation relation) {
-        FintObject fintObject = reflectionService.findFintObject(relation.packageName());
+        FintObject fintObject = getFintObject(relation.packageName());
         if (fintObject.getFields().isEmpty()) {
             return fintObject.getRelations().isEmpty();
         }
@@ -112,7 +114,7 @@ public class QueryConfig {
             if (typeIsFromJava(field.getType())) {
                 objectTypeBuilder.field(fieldBuilder.type(determineGraphQLType(field.getType())).build());
             } else {
-                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.findFintObject(field.getType().getName()))));
+                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(getFintObject(field.getType().getName()))));
             }
         });
     }
@@ -131,6 +133,14 @@ public class QueryConfig {
 
     private boolean typeIsFromJava(Class<?> clazz) {
         return clazz.getClassLoader() == null || clazz.getPackage().getName().startsWith("java") || clazz.getPackage().getName().startsWith("javax");
+    }
+
+    private FintObject getFintObject(String name) {
+        if (reflectionService.getFintObjects().containsKey(name)) {
+            return reflectionService.getFintObjects().get(name);
+        } else {
+            throw new RuntimeException("Could not find FintObject with name " + name);
+        }
     }
 
 }

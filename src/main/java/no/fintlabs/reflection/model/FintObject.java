@@ -1,23 +1,24 @@
 package no.fintlabs.reflection.model;
 
 import lombok.Data;
-import no.fintlabs.reflection.ReflectionService;
+import no.fint.model.FintMainObject;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Data
 public class FintObject {
 
+    private final boolean isMainObject;
     private final String name;
     private final String packageName;
     private final String domainName;
     private final List<Field> fields;
     private final List<FintRelation> relations;
+    private final Set<String> identificatorFields;
 
     public FintObject(Class<?> clazz, boolean hasUniqueName) {
         this.packageName = clazz.getName();
@@ -25,6 +26,12 @@ public class FintObject {
         this.name = setName(clazz, hasUniqueName);
         this.fields = getAllFields(clazz);
         this.relations = getAllRelations(clazz);
+        this.isMainObject = setIsMainObject(clazz);
+        this.identificatorFields = setIdentificatorFields();
+    }
+
+    private boolean setIsMainObject(Class<?> clazz) {
+        return FintMainObject.class.isAssignableFrom(clazz);
     }
 
     public boolean shouldBeProcessed() {
@@ -44,6 +51,7 @@ public class FintObject {
         return split[3].substring(0, 1).toUpperCase() + split[3].substring(1);
     }
 
+    // TODO: CT-1136: Add interface for relations
     private List<FintRelation> getAllRelations(Class<?> clazz) {
         List<FintRelation> relations = new ArrayList<>();
         Class<?>[] declaredClasses = clazz.getDeclaredClasses();
@@ -75,6 +83,16 @@ public class FintObject {
             clazz = clazz.getSuperclass();
         }
         return fields;
+    }
+
+    private Set<String> setIdentificatorFields() {
+        Set<String> identifikatorFields = new HashSet<>();
+        for (Field field : getFields()) {
+            if (field.getType().equals(Identifikator.class)) {
+                identifikatorFields.add(field.getName());
+            }
+        }
+        return identifikatorFields;
     }
 
 }
