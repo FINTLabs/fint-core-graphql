@@ -25,9 +25,6 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Configuration
 public class CodeRegistryConfig {
 
-    @Value("${fint.graphql.base-url:https://play-with-fint.felleskomponent.no}")
-    private String baseUrl;
-
     @Bean
     public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
