@@ -5,7 +5,9 @@ import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLObjectType;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.RequestService;
 import no.fintlabs.exceptions.MissingAuthorizationException;
 import no.fintlabs.reflection.model.FintObject;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,11 +25,21 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Slf4j
 @Configuration
+@RequiredArgsConstructor
 public class CodeRegistryConfig {
 
+    private final RequestService requestService;
+
     @Bean
-    public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query)  {
+    public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query,
+                                            Map<Integer, FintObject> fintObjectRelation)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
+
+        query.getFieldDefinitions().forEach(fieldDefinition -> {
+            FintObject fintObject = fintObjectRelation.get(fieldDefinition.getType().hashCode());
+            log.info(fintObject.getName());
+
+        });
 
         DataFetcher<?> test = e -> {
             ServerHttpRequest serverWebExchange = getServerHttpRequest(e.getGraphQlContext());
