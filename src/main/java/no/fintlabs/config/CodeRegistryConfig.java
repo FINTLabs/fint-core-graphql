@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
 @Slf4j
 @Configuration
 public class CodeRegistryConfig {
@@ -43,7 +45,7 @@ public class CodeRegistryConfig {
     }
 
     private String getAuthorizationValue(ServerHttpRequest request) {
-        return Optional.ofNullable(request.getHeaders().get("Authorization"))
+        return Optional.ofNullable(request.getHeaders().get(AUTHORIZATION))
                 .map(List::getFirst)
                 .orElseThrow(MissingAuthorizationException::new);
     }
