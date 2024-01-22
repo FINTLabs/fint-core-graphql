@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.RequestService;
 import no.fintlabs.exceptions.MissingAuthorizationException;
+import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,27 +29,14 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RequiredArgsConstructor
 public class CodeRegistryConfig {
 
+    private final ReflectionService reflectionService;
     private final RequestService requestService;
 
     @Bean("codeRegistry")
-    public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query,
-                                            Map<Integer, FintObject> fintObjectRelation)  {
+    public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
 
-        query.getFieldDefinitions().forEach(fieldDefinition -> {
-            FintObject fintObject = fintObjectRelation.get(fieldDefinition.getType().hashCode());
-            log.info(fintObject.getName());
 
-        });
-
-        DataFetcher<?> test = e -> {
-            ServerHttpRequest serverWebExchange = getServerHttpRequest(e.getGraphQlContext());
-            return getAuthorizationValue(serverWebExchange);
-        };
-
-        query.getFieldDefinitions().forEach(field -> {
-            builder.dataFetcher(FieldCoordinates.coordinates("Query", field.getName()), test);
-        });
 
         return builder.build();
     }
