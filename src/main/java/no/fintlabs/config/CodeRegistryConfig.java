@@ -30,7 +30,7 @@ public class CodeRegistryConfig {
 
     private final RequestService requestService;
 
-    @Bean
+    @Bean("codeRegistry")
     public GraphQLCodeRegistry codeRegistry(GraphQLObjectType query,
                                             Map<Integer, FintObject> fintObjectRelation)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
