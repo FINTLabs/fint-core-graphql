@@ -4,6 +4,8 @@ import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.ReferenceService;
+import no.fintlabs.RequestService;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -21,7 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class QueryConfig {
 
-    private final Map<Integer, FintObject> fintObjectRelation = new HashMap<>();
+    private final ReferenceService referenceService;
     private final Map<String, GraphQLObjectType> processedTypes = new HashMap<>();
     private final ReflectionService reflectionService;
 
@@ -40,11 +42,6 @@ public class QueryConfig {
                 .filter(fintObject -> !fintObject.isMainObject())
                 .map(this::getOrCreateObjectType)
                 .collect(Collectors.toSet());
-    }
-
-    @Bean
-    public Map<Integer, FintObject> hashCodeFintObjectMap() {
-        return fintObjectRelation;
     }
 
     private List<GraphQLFieldDefinition> getFieldDefinitions() {
@@ -91,7 +88,7 @@ public class QueryConfig {
         addRelations(fintObject, objectTypeBuilder);
 
         GraphQLObjectType graphQLObjectType = objectTypeBuilder.build();
-        fintObjectRelation.put(graphQLObjectType.hashCode(), fintObject);
+        referenceService.addReferenecs(fintObject, graphQLObjectType);
 
         return graphQLObjectType;
     }

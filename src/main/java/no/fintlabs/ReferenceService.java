@@ -13,6 +13,11 @@ public class ReferenceService {
     private final Map<Integer, FintObject> fintObjectReferences = new HashMap<>();
     private final Map<Integer, GraphQLObjectType> objectTypeReferences = new HashMap<>();
 
+    public void addReferenecs(FintObject fintObject, GraphQLObjectType objectType) {
+        fintObjectReferences.put(objectType.hashCode(), fintObject);
+        objectTypeReferences.put(fintObject.hashCode(), objectType);
+    }
+
     public FintObject getFintObject(int hashCode) {
         return fintObjectReferences.get(hashCode);
     }
