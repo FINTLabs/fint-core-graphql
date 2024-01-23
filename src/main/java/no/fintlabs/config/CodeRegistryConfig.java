@@ -21,8 +21,7 @@ public class CodeRegistryConfig {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
 
         query.getFieldDefinitions().forEach(fieldDefinition -> {
-            dataFetcherService.attachQueryableDataFetcher(builder, query, fieldDefinition);
-            dataFetcherService.attachNonQueryableDataFetcher(builder, query, fieldDefinition);
+            dataFetcherService.attachDataFetchers(builder, query, fieldDefinition);
         });
 
         return builder.build();

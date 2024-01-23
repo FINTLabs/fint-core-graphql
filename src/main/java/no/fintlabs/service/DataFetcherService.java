@@ -7,11 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
 import no.fintlabs.reflection.model.FintObject;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,38 +24,51 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RequiredArgsConstructor
 public class DataFetcherService {
 
+    private final static String DATA = "data";
+
+    private final RequestService requestService;
     private final ReferenceService referenceService;
 
-    public void attachNonQueryableDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
+    public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
             FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
             if (fintObject.isMainObject()) {
-                // Request and get data
+                createDataFetcherForMainObject(builder, parentType, fieldDefinition, fintObject);
             }
-            objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
-                attachNonQueryableDataFetcher(builder, objectType, childFieldDefinition);
-            });
+            objectType.getFieldDefinitions().forEach(childFieldDefinition -> attachDataFetchers(
+                    builder,
+                    objectType,
+                    childFieldDefinition)
+            );
+        } else {
+            builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
         }
-        // If it's a normal Java class String, int, float, etc...
-        builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
+    }
+
+    private void createDataFetcherForMainObject(GraphQLCodeRegistry.Builder builder,
+                                                GraphQLObjectType parentType,
+                                                GraphQLFieldDefinition fieldDefinition,
+                                                FintObject fintObject) {
+        builder.dataFetcher(parentType, fieldDefinition, environment -> {
+            String requestUri = createRequestUri(environment, fintObject);
+            log.info("Doing request to: {}", requestUri);
+            Mono<ResponseEntity<Object>> resource = requestService.getResource(requestUri, "123");
+
+            return resource
+                    .mapNotNull(responseEntity -> {
+                        environment.getGraphQlContext().put(DATA, responseEntity.getBody());
+                        log.info("DATA FILLED: {}", responseEntity.getBody());
+                        return responseEntity.getBody();
+                    })
+                    .toFuture();
+        });
     }
 
     private DataFetcher<?> getDataFromGraphQLContext(GraphQLFieldDefinition fieldDefinition) {
         return env -> {
-            Map<String, Object> data =  env.getGraphQlContext().get("data");
-            return "Test";
+            Map<String, Object> data = env.getGraphQlContext().get(DATA);
+            return data.get(fieldDefinition.getName());
         };
-    }
-
-    public void attachQueryableDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType query, GraphQLFieldDefinition queryableFieldDefinition) {
-        FintObject fintObject = referenceService.getFintObject(queryableFieldDefinition.getType().hashCode());
-        // TODO: Handle felles resource differently
-        builder.dataFetcher(query, queryableFieldDefinition, environment -> {
-            setAuthorizationValueToContext(environment);
-            String requestUri = createRequestUri(environment, fintObject);
-            log.info("Url: {}", requestUri);
-            return "ok";
-        });
     }
 
     private String createRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
