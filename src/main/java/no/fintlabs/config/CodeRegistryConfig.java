@@ -45,11 +45,15 @@ public class CodeRegistryConfig {
         // TODO: Handle felles resource differently
         builder.dataFetcher(query, queryableFieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
-            Map.Entry<String, Object> firstArgument = getFirstArgument(environment);
-            String uri = String.format("%s/%s/%s", fintObject.getResourceUrl(), firstArgument.getKey(), firstArgument.getValue());
-            log.info("Url: {}", uri);
+            String requestUri = createRequestUri(environment, fintObject);
+            log.info("Url: {}", requestUri);
             return "ok";
         });
+    }
+
+    private String createRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
+        Map.Entry<String, Object> firstArgument = getFirstArgument(environment);
+        return String.format("%s/%s/%s", fintObject.getResourceUrl(), firstArgument.getKey(), firstArgument.getValue());
     }
 
     private Map.Entry<String, Object> getFirstArgument(DataFetchingEnvironment environment) {
