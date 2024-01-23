@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ReferenceService;
 import no.fintlabs.RequestService;
+import no.fintlabs.service.ReferenceService;
 import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
 import no.fintlabs.reflection.model.FintObject;
