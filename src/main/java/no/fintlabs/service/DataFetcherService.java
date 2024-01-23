@@ -50,17 +50,16 @@ public class DataFetcherService {
                                                 GraphQLFieldDefinition fieldDefinition,
                                                 FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
-            String requestUri = createRequestUri(environment, fintObject);
-            log.info("Doing request to: {}", requestUri);
-            Mono<ResponseEntity<Object>> resource = requestService.getResource(requestUri, "123");
+            setAuthorizationValueToContext(environment);
+            Mono<ResponseEntity<Object>> resource = requestService.getResource(
+                    createRequestUri(environment, fintObject),
+                    environment.getGraphQlContext().get(AUTHORIZATION)
+            );
 
-            return resource
-                    .mapNotNull(responseEntity -> {
-                        environment.getGraphQlContext().put(DATA, responseEntity.getBody());
-                        log.info("DATA FILLED: {}", responseEntity.getBody());
-                        return responseEntity.getBody();
-                    })
-                    .toFuture();
+            return resource.mapNotNull(responseEntity -> {
+                environment.getGraphQlContext().put(DATA, responseEntity.getBody());
+                return responseEntity.getBody();
+            }).toFuture();
         });
     }
 
@@ -83,6 +82,9 @@ public class DataFetcherService {
     }
 
     private void setAuthorizationValueToContext(DataFetchingEnvironment environment) {
+        if (environment.getGraphQlContext().hasKey(AUTHORIZATION)) {
+            return;
+        }
         environment.getGraphQlContext().put(AUTHORIZATION, getAuthorizationValue(getServerHttpRequest(environment.getGraphQlContext())));
     }
 
