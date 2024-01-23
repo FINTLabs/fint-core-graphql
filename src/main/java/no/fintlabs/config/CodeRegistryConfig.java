@@ -32,7 +32,7 @@ public class CodeRegistryConfig {
     private final ReferenceService referenceService;
     private final RequestService requestService;
 
-    @Bean
+    @Bean("codeRegistry")
     public GraphQLCodeRegistry codeRegistry(@Qualifier("query") GraphQLObjectType query)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
 
