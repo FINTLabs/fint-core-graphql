@@ -7,6 +7,7 @@ import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLObjectType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.ReferenceService;
 import no.fintlabs.RequestService;
 import no.fintlabs.exceptions.MissingAuthorizationException;
 import no.fintlabs.reflection.ReflectionService;
@@ -28,6 +29,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Configuration
 @RequiredArgsConstructor
 public class CodeRegistryConfig {
+
 
     private final ReflectionService reflectionService;
     private final RequestService requestService;

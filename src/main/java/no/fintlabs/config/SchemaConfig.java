@@ -22,7 +22,7 @@ public class SchemaConfig {
     @Bean
     public GraphQLSchema graphQLSchema(@Qualifier("query") GraphQLObjectType query,
                                        @Qualifier("additionalTypes") Set<GraphQLType> additionalTypes,
-                                       @Qualifier("codeRegistry") GraphQLCodeRegistry codeRegistry) {
+                                       @Qualifier("codeRegistry")GraphQLCodeRegistry codeRegistry) {
         return GraphQLSchema.newSchema()
                 .query(query)
                 .additionalTypes(additionalTypes)
