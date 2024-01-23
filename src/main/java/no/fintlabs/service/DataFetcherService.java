@@ -27,6 +27,10 @@ public class DataFetcherService {
 
     public void attachNonQueryableDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
+            FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
+            if (fintObject.isMainObject()) {
+                // Request and get data
+            }
             objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
                 attachNonQueryableDataFetcher(builder, objectType, childFieldDefinition);
             });
