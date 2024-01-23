@@ -1,6 +1,7 @@
 package no.fintlabs.config;
 
 import graphql.GraphQLContext;
+import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static graphql.Scalars.GraphQLString;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Slf4j
@@ -35,9 +37,23 @@ public class CodeRegistryConfig {
     public GraphQLCodeRegistry codeRegistry(@Qualifier("query") GraphQLObjectType query)  {
         query.getFieldDefinitions().forEach(fieldDefinition -> {
             attachQueryableDataFetcher(query, fieldDefinition);
-
+            attachNonQueryableDataFetcher(fieldDefinition);
         });
         return builder.build();
+    }
+
+    private void attachNonQueryableDataFetcher(GraphQLFieldDefinition fieldDefinition) {
+        if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
+            if (referenceService.containsFintObject(objectType.hashCode())) {
+                FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
+                if (fintObject.isMainObject()) {
+                    // TODO: Handle references to other FintObjects
+                    // Update data in GraphQLContext with data from RequestService using the links in the current data context
+                }
+                // Update data in GraphQLContext with data context, the fieldDefinition name should be the key-pair
+            }
+
+        }
     }
 
     private void attachQueryableDataFetcher(GraphQLObjectType query, GraphQLFieldDefinition queryableFieldDefinition) {
@@ -60,23 +76,6 @@ public class CodeRegistryConfig {
         return environment.getArguments().entrySet().stream()
                 .findFirst()
                 .orElseThrow(MissingArgumentException::new);
-    }
-
-    private void recursiveFunction(GraphQLFieldDefinition fieldDefinition) {
-        if (referenceService.containsFintObject(fieldDefinition.getType().hashCode())){
-            FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
-            if (fintObject.isMainObject()) {
-                if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
-                    // TODO: Handle relasjoner
-                    // If first call
-                    // Else get link from data
-                } else {
-
-                }
-            } else {
-
-            }
-        }
     }
 
     private void setAuthorizationValueToContext(DataFetchingEnvironment environment) {
