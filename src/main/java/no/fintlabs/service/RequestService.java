@@ -14,12 +14,12 @@ public class RequestService {
 
     private final WebClient webClient;
 
-    public Mono<ResponseEntity> getResource(String uri, String authorizationValue) {
+    public Mono<ResponseEntity<Object>> getResource(String uri, String authorizationValue) {
         return webClient.get()
                 .uri(uri)
                 .header(AUTHORIZATION, authorizationValue)
                 .retrieve()
-                .bodyToMono(ResponseEntity.class);
+                .toEntity(Object.class);
     }
 
 }
