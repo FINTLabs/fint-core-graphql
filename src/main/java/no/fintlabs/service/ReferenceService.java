@@ -1,4 +1,4 @@
-package no.fintlabs;
+package no.fintlabs.service;
 
 import graphql.schema.GraphQLObjectType;
 import no.fintlabs.reflection.model.FintObject;
