@@ -18,6 +18,10 @@ public class ReferenceService {
         objectTypeReferences.put(fintObject.hashCode(), objectType);
     }
 
+    public boolean containsFintObject(int hashCode) {
+        return fintObjectReferences.containsKey(hashCode);
+    }
+
     public FintObject getFintObject(int hashCode) {
         return fintObjectReferences.get(hashCode);
     }

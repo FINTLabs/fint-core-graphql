@@ -1,10 +1,7 @@
 package no.fintlabs.config;
 
 import graphql.GraphQLContext;
-import graphql.schema.DataFetcher;
-import graphql.schema.FieldCoordinates;
-import graphql.schema.GraphQLCodeRegistry;
-import graphql.schema.GraphQLObjectType;
+import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ReferenceService;
@@ -33,23 +30,24 @@ public class CodeRegistryConfig {
 
     private final ReferenceService referenceService;
     private final RequestService requestService;
+    private final GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
 
     @Bean("codeRegistry")
     public GraphQLCodeRegistry codeRegistry(@Qualifier("query") GraphQLObjectType query)  {
-        GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
-
-        query.getFieldDefinitions().forEach(queryableFieldDefinition -> {
-            FintObject fintObject = referenceService.getFintObject(queryableFieldDefinition.getType().hashCode());
-            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
-                // TODO: Handle felles fintObjects
-                log.info(fintObject.getName());
-            } else {
-                // TODO: Handle main fintObjects
-            }
-
-        });
-
+        query.getFieldDefinitions().forEach(this::recursiveFunction);
         return builder.build();
+    }
+
+    private void recursiveFunction(GraphQLFieldDefinition fieldDefinition) {
+        if (referenceService.containsFintObject(fieldDefinition.getType().hashCode())){
+            FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
+            if (fintObject.isMainObject()) {
+                // TODO: Handle relasjoner
+                // If first call
+                // Else get link from data
+            } else {
+            }
+        }
     }
 
     private String getAuthorizationValue(ServerHttpRequest request) {
