@@ -31,14 +31,23 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class CodeRegistryConfig {
 
 
-    private final ReflectionService reflectionService;
+    private final ReferenceService referenceService;
     private final RequestService requestService;
 
     @Bean("codeRegistry")
     public GraphQLCodeRegistry codeRegistry(@Qualifier("query") GraphQLObjectType query)  {
         GraphQLCodeRegistry.Builder builder = GraphQLCodeRegistry.newCodeRegistry();
 
+        query.getFieldDefinitions().forEach(queryableFieldDefinition -> {
+            FintObject fintObject = referenceService.getFintObject(queryableFieldDefinition.getType().hashCode());
+            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
+                // TODO: Handle felles fintObjects
+                log.info(fintObject.getName());
+            } else {
+                // TODO: Handle main fintObjects
+            }
 
+        });
 
         return builder.build();
     }
