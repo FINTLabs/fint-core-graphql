@@ -1,4 +1,4 @@
-package no.fintlabs;
+package no.fintlabs.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
