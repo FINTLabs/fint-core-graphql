@@ -44,6 +44,7 @@ public class CodeRegistryConfig {
         FintObject fintObject = referenceService.getFintObject(queryableFieldDefinition.getType().hashCode());
         // TODO: Handle felles resource differently
         builder.dataFetcher(query, queryableFieldDefinition, environment -> {
+            setAuthorizationValueToContext(environment);
             Map.Entry<String, Object> firstArgument = getFirstArgument(environment);
             String uri = String.format("%s/%s/%s", fintObject.getResourceUrl(), firstArgument.getKey(), firstArgument.getValue());
             log.info("Url: {}", uri);
@@ -74,8 +75,12 @@ public class CodeRegistryConfig {
         }
     }
 
-    private String getAuthorizationValue(ServerHttpRequest request) {
-        return Optional.ofNullable(request.getHeaders().get(AUTHORIZATION))
+    private void setAuthorizationValueToContext(DataFetchingEnvironment environment) {
+        environment.getGraphQlContext().put(AUTHORIZATION, getAuthorizationValue(getServerHttpRequest(environment.getGraphQlContext())));
+    }
+
+    private String getAuthorizationValue(ServerHttpRequest serverHttpRequest) {
+        return Optional.ofNullable(serverHttpRequest.getHeaders().get(AUTHORIZATION))
                 .map(List::getFirst)
                 .orElseThrow(MissingAuthorizationException::new);
     }
