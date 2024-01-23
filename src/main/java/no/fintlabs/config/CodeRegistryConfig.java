@@ -6,11 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.ReferenceService;
 import no.fintlabs.RequestService;
+import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
-import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -34,18 +33,43 @@ public class CodeRegistryConfig {
 
     @Bean("codeRegistry")
     public GraphQLCodeRegistry codeRegistry(@Qualifier("query") GraphQLObjectType query)  {
-        query.getFieldDefinitions().forEach(this::recursiveFunction);
+        query.getFieldDefinitions().forEach(fieldDefinition -> {
+            attachQueryableDataFetcher(query, fieldDefinition);
+
+        });
         return builder.build();
+    }
+
+    private void attachQueryableDataFetcher(GraphQLObjectType query, GraphQLFieldDefinition queryableFieldDefinition) {
+        FintObject fintObject = referenceService.getFintObject(queryableFieldDefinition.getType().hashCode());
+        // TODO: Handle felles resource differently
+        builder.dataFetcher(query, queryableFieldDefinition, environment -> {
+            Map.Entry<String, Object> firstArgument = getFirstArgument(environment);
+            String uri = String.format("%s/%s/%s", fintObject.getResourceUrl(), firstArgument.getKey(), firstArgument.getValue());
+            log.info("Url: {}", uri);
+            return "ok";
+        });
+    }
+
+    private Map.Entry<String, Object> getFirstArgument(DataFetchingEnvironment environment) {
+        return environment.getArguments().entrySet().stream()
+                .findFirst()
+                .orElseThrow(MissingArgumentException::new);
     }
 
     private void recursiveFunction(GraphQLFieldDefinition fieldDefinition) {
         if (referenceService.containsFintObject(fieldDefinition.getType().hashCode())){
             FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
             if (fintObject.isMainObject()) {
-                // TODO: Handle relasjoner
-                // If first call
-                // Else get link from data
+                if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
+                    // TODO: Handle relasjoner
+                    // If first call
+                    // Else get link from data
+                } else {
+
+                }
             } else {
+
             }
         }
     }
