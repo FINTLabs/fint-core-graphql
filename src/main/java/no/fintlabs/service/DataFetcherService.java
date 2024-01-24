@@ -26,17 +26,31 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class DataFetcherService {
 
     private final static String DATA = "data";
+    private final static String LINKS = "_links";
 
     private final RequestService requestService;
     private final ReferenceService referenceService;
-
+    
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
+        GraphQLObjectType objectType = (GraphQLObjectType) fieldDefinition.getType();
+        FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
+        attachDataFetcherForQueryableObjects(builder, parentType, fieldDefinition, fintObject);
+        log.info("Fetching thing for: {}", fintObject.getName());
+        objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
+            createDataFetchers(builder, objectType, childFieldDefinition);
+        });
+    }
+
+    public void createDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
+        if (parentType.getName().equalsIgnoreCase("elev")) {
+            log.info(fieldDefinition.getName());
+        }
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
             FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
             if (fintObject.isMainObject()) {
-                createDataFetcherForMainObject(builder, parentType, fieldDefinition, fintObject);
+                attachDataFetcherForRelation(builder, parentType, fieldDefinition);
             }
-            objectType.getFieldDefinitions().forEach(childFieldDefinition -> attachDataFetchers(
+            objectType.getFieldDefinitions().forEach(childFieldDefinition -> createDataFetchers(
                     builder,
                     objectType,
                     childFieldDefinition)
@@ -45,11 +59,40 @@ public class DataFetcherService {
             builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
         }
     }
+    
+    private void attachDataFetcherForRelation(GraphQLCodeRegistry.Builder builder,
+                                              GraphQLObjectType parentType,
+                                              GraphQLFieldDefinition fieldDefinition) {
+        builder.dataFetcher(parentType, fieldDefinition, environment -> {
+            return updateGraphQLContextData(environment, requestService.getResource(
+                    getRelationRequestUri(environment, parentType),
+                    environment.getGraphQlContext().get(AUTHORIZATION)
+            ));
+        });
+    }
 
-    private void createDataFetcherForMainObject(GraphQLCodeRegistry.Builder builder,
-                                                GraphQLObjectType parentType,
-                                                GraphQLFieldDefinition fieldDefinition,
-                                                FintObject fintObject) {
+    private String getRelationRequestUri(DataFetchingEnvironment environment, GraphQLObjectType parentType) {
+        Map<String, Object> contextData = environment.getGraphQlContext().get(DATA);
+        if (contextData.get(LINKS) instanceof Map<?,?> linksMap) {
+            Object linksObject = linksMap.get(parentType.getName().toLowerCase());
+
+            if (linksObject instanceof List<?>) {
+                List<Map<String, String>> linksList = (List<Map<String, String>>) linksObject;
+                if (!linksList.isEmpty() && linksList.get(0).containsKey("href")) {
+                    String s = linksList.get(0).get("href");
+                    log.info("LINK: {}", s);
+                    return s;
+                }
+            }
+        }
+        log.error("CANT FIND HREF");
+        return null;
+    }
+
+    private void attachDataFetcherForQueryableObjects(GraphQLCodeRegistry.Builder builder,
+                                                      GraphQLObjectType parentType,
+                                                      GraphQLFieldDefinition fieldDefinition,
+                                                      FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
             return updateGraphQLContextData(environment, requestService.getResource(
