@@ -45,6 +45,7 @@ public class DataFetcherService {
         if (parentType.getName().equalsIgnoreCase("elev")) {
             log.info(fieldDefinition.getName());
         }
+        // TODO: BUG! Relations of FintMainObjects doesn't become a GraphQLObjectType
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
             FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
             if (fintObject.isMainObject()) {
