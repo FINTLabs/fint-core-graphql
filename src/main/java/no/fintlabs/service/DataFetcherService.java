@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -51,16 +52,18 @@ public class DataFetcherService {
                                                 FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
-            Mono<ResponseEntity<Object>> resource = requestService.getResource(
+            return updateGraphQLContextData(environment, requestService.getResource(
                     createRequestUri(environment, fintObject),
                     environment.getGraphQlContext().get(AUTHORIZATION)
-            );
-
-            return resource.mapNotNull(responseEntity -> {
-                environment.getGraphQlContext().put(DATA, responseEntity.getBody());
-                return responseEntity.getBody();
-            }).toFuture();
+            ));
         });
+    }
+
+    private CompletableFuture<Object> updateGraphQLContextData(DataFetchingEnvironment environment, Mono<ResponseEntity<Object>> resource) {
+        return resource.mapNotNull(responseEntity -> {
+            environment.getGraphQlContext().put(DATA, responseEntity.getBody());
+            return responseEntity.getBody();
+        }).toFuture();
     }
 
     private DataFetcher<?> getDataFromGraphQLContext(GraphQLFieldDefinition fieldDefinition) {
