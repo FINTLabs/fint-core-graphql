@@ -35,17 +35,12 @@ public class DataFetcherService {
         GraphQLObjectType objectType = (GraphQLObjectType) fieldDefinition.getType();
         FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
         attachDataFetcherForQueryableObjects(builder, parentType, fieldDefinition, fintObject);
-        log.info("Fetching thing for: {}", fintObject.getName());
         objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
             createDataFetchers(builder, objectType, childFieldDefinition);
         });
     }
 
     public void createDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
-        if (parentType.getName().equalsIgnoreCase("elev")) {
-            log.info(fieldDefinition.getName());
-        }
-        // TODO: BUG! Relations of FintMainObjects doesn't become a GraphQLObjectType
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
             FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
             if (fintObject.isMainObject()) {
