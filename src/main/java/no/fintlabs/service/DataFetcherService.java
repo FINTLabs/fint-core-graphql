@@ -51,6 +51,8 @@ public class DataFetcherService {
                     objectType,
                     childFieldDefinition)
             );
+        } else if (fieldDefinition.getType() instanceof GraphQLTypeReference typeReference) {
+            GraphQLObjectType relationFintObject = referenceService.getRelationFintObject(typeReference.getName());
         } else {
             builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
         }
