@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -36,26 +34,38 @@ public class DataFetcherService {
         FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
         attachDataFetcherForQueryableObjects(builder, parentType, fieldDefinition, fintObject);
         objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
-            createDataFetchers(builder, objectType, childFieldDefinition);
+            createDataFetchers(builder, objectType, childFieldDefinition, new HashSet<>());
         });
     }
 
-    public void createDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
+    public void createDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, Set<String> fetchPath) {
+        if (fetchPath.contains(parentType.getName())) {
+            return;
+        }
+
+        fetchPath.add(parentType.getName());
+
         if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
-            FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
-            if (fintObject.isMainObject()) {
-                attachDataFetcherForRelation(builder, parentType, fieldDefinition);
-            }
-            objectType.getFieldDefinitions().forEach(childFieldDefinition -> createDataFetchers(
-                    builder,
-                    objectType,
-                    childFieldDefinition)
-            );
+            attachDataFetchers(builder, objectType, parentType, fieldDefinition, fetchPath);
         } else if (fieldDefinition.getType() instanceof GraphQLTypeReference typeReference) {
             GraphQLObjectType relationFintObject = referenceService.getRelationFintObject(typeReference.getName());
+            attachDataFetchers(builder, relationFintObject, parentType, fieldDefinition, fetchPath);
         } else {
             builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
         }
+    }
+
+    public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType objectType, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, Set<String> fetchPath) {
+        FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
+        if (fintObject.isMainObject()) {
+            attachDataFetcherForRelation(builder, parentType, fieldDefinition);
+        }
+        objectType.getFieldDefinitions().forEach(childFieldDefinition -> createDataFetchers(
+                builder,
+                objectType,
+                childFieldDefinition,
+                fetchPath)
+        );
     }
     
     private void attachDataFetcherForRelation(GraphQLCodeRegistry.Builder builder,
