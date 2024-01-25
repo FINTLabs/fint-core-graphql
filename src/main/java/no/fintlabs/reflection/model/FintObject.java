@@ -7,12 +7,14 @@ import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 @Data
 public class FintObject {
 
     private final boolean isMainObject;
+    private final boolean isAbstract;
     private final String name;
     private final String packageName;
     private final String domainName;
@@ -30,6 +32,7 @@ public class FintObject {
         this.relations = getAllRelations(clazz);
         this.isMainObject = setIsMainObject(clazz);
         this.identificatorFields = setIdentificatorFields();
+        this.isAbstract = Modifier.isAbstract(clazz.getModifiers());
     }
 
     private String setResourceUrl(Class<?> clazz) {

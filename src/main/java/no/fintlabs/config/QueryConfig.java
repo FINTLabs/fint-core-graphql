@@ -95,10 +95,13 @@ public class QueryConfig {
     private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
         fintObject.getRelations().forEach(relation -> {
             if (!relationIsEmpty(relation)) {
-                objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
-                        .name(relation.relationName().toLowerCase())
-                        .type(GraphQLTypeReference.typeRef(reflectionService.getFintObject(relation.packageName()).getName()))
-                        .build());
+                FintObject relationFintObject = reflectionService.getFintObject(relation.packageName());
+                if (!relationFintObject.isAbstract()) {
+                    objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
+                            .name(relation.relationName().toLowerCase())
+                            .type(GraphQLTypeReference.typeRef(relationFintObject.getName()))
+                            .build());
+                }
             }
         });
     }
