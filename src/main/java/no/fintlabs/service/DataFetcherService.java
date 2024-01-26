@@ -73,27 +73,24 @@ public class DataFetcherService {
                                               GraphQLFieldDefinition fieldDefinition) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             return updateGraphQLContextData(environment, requestService.getResource(
-                    getRelationRequestUri(environment, parentType),
+                    getRelationRequestUri(environment, fieldDefinition),
                     environment.getGraphQlContext().get(AUTHORIZATION)
             ));
         });
     }
 
-    private String getRelationRequestUri(DataFetchingEnvironment environment, GraphQLObjectType parentType) {
+    private String getRelationRequestUri(DataFetchingEnvironment environment, GraphQLFieldDefinition fieldDefinition) {
         Map<String, Object> contextData = environment.getGraphQlContext().get(DATA);
         if (contextData.get(LINKS) instanceof Map<?,?> linksMap) {
-            Object linksObject = linksMap.get(parentType.getName().toLowerCase());
+            Object linksObject = linksMap.get(fieldDefinition.getName().toLowerCase());
 
             if (linksObject instanceof List<?>) {
                 List<Map<String, String>> linksList = (List<Map<String, String>>) linksObject;
                 if (!linksList.isEmpty() && linksList.get(0).containsKey("href")) {
-                    String s = linksList.get(0).get("href");
-                    log.info("LINK: {}", s);
-                    return s;
+                    return linksList.get(0).get("href");
                 }
             }
         }
-        log.error("CANT FIND HREF");
         return null;
     }
 
