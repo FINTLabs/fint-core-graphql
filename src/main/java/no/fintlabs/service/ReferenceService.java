@@ -11,15 +11,9 @@ import java.util.Map;
 public class ReferenceService {
 
     private final Map<Integer, FintObject> fintObjectReferences = new HashMap<>();
-    private final Map<String, GraphQLObjectType> relationFintObjectReference = new HashMap<>();
 
     public void addReferenecs(FintObject fintObject, GraphQLObjectType objectType) {
         fintObjectReferences.put(objectType.hashCode(), fintObject);
-        relationFintObjectReference.put(fintObject.getName(), objectType);
-    }
-
-    public GraphQLObjectType getRelationFintObject(String name) {
-        return relationFintObjectReference.get(name);
     }
 
     public FintObject getFintObject(int hashCode) {
