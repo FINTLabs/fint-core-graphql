@@ -48,11 +48,9 @@ public class DataFetcherService {
 
     private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
         FintObject fintObject = reflectionService.getFintObject(fintRelation.packageName());
-        return environment -> {
-            return switch (fintRelation.multiplicity()) {
-                case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject);
-                default -> getFintRelationResource(environment, fintObject);
-            };
+        return environment -> switch (fintRelation.multiplicity()) {
+            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject);
+            default -> getFintRelationResource(environment, fintObject);
         };
     }
 
