@@ -98,9 +98,18 @@ public class QueryConfig {
             if (!relationIsEmpty(relation) && !relationFintObject.isAbstract())
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
-                        .type(GraphQLTypeReference.typeRef(relationFintObject.getName()))
+                        .type(getRelationType(relation, relationFintObject))
                         .build());
         });
+    }
+
+    private GraphQLOutputType getRelationType(FintRelation relation, FintObject relationFintObject) {
+        return switch (relation.multiplicity()) {
+            case ONE_TO_ONE -> GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(relationFintObject.getName()));
+            case ZERO_TO_MANY -> GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName()));
+            case ONE_TO_MANY -> GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
+            default -> GraphQLTypeReference.typeRef(relationFintObject.getName());
+        };
     }
 
     private boolean relationIsEmpty(FintRelation relation) {

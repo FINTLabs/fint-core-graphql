@@ -76,7 +76,8 @@ public class FintObject {
                         Method getMultiplicityMethod = innerClass.getMethod("getMultiplicity");
 
                         String typeName = (String) getTypeNameMethod.invoke(enumConstant);
-                        String multiplicity = (String) getMultiplicityMethod.invoke(enumConstant);
+                        String multiplicityLabel = (String) getMultiplicityMethod.invoke(enumConstant);
+                        Multiplicity multiplicity = Multiplicity.fromLabel(multiplicityLabel);
                         relations.add(new FintRelation(enumConstant.toString(), typeName, multiplicity));
                     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                         throw new RuntimeException(e);
