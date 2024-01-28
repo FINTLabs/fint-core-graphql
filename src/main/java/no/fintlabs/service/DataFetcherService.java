@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
+import no.fintlabs.exceptions.MissingLinkException;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -51,9 +52,11 @@ public class DataFetcherService {
 
     private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
         FintObject fintObject = reflectionService.getFintObject(fintRelation.packageName());
+        String fieldName = fintRelation.relationName().toLowerCase();
+
         return environment -> switch (fintRelation.multiplicity()) {
-            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject);
-            default -> getFintRelationResource(environment, fintObject);
+            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject, fieldName);
+            default -> getFintRelationResource(environment, fintObject, fieldName);
         };
     }
 
@@ -70,16 +73,16 @@ public class DataFetcherService {
         });
     }
 
-    private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject) {
-        return getRelationRequestUri(environment, fintObject).stream()
+    private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+        return getRelationRequestUri(environment, fintObject, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
                 ).toList().getFirst();
     }
 
-    private Object getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject) {
-        return getRelationRequestUri(environment, fintObject).stream()
+    private Object getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+        return getRelationRequestUri(environment, fintObject, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
@@ -93,9 +96,15 @@ public class DataFetcherService {
         );
     }
 
-    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
+    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
         Map<String, Map<String, List<Map<String, String>>>> source = environment.getSource();
-        return source.get(LINKS).get(fintObject.getSimpleName()).stream()
+        Map<String, List<Map<String, String>>> linksMap = source.get(LINKS);
+
+        if (linksMap == null || !linksMap.containsKey(fintObject.getSimpleName()) || linksMap.get(fintObject.getSimpleName()).isEmpty()) {
+            throw new MissingLinkException(fieldName);
+        }
+
+        return linksMap.get(fintObject.getSimpleName()).stream()
                 .map(map -> map.get(HREF))
                 .toList();
     }
