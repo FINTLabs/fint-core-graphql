@@ -16,6 +16,7 @@ public class FintObject {
     private final boolean isMainObject;
     private final boolean isAbstract;
     private final String name;
+    private final String simpleName;
     private final String packageName;
     private final String domainName;
     private final String resourceUrl;
@@ -33,6 +34,7 @@ public class FintObject {
         this.isMainObject = setIsMainObject(clazz);
         this.identificatorFields = setIdentificatorFields();
         this.isAbstract = Modifier.isAbstract(clazz.getModifiers());
+        this.simpleName = clazz.getSimpleName().toLowerCase();
     }
 
     private String setResourceUrl(Class<?> clazz) {

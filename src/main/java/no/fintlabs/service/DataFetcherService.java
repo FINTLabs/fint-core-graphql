@@ -6,15 +6,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
+import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
-import org.springframework.http.ResponseEntity;
+import no.fintlabs.reflection.model.FintRelation;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -23,102 +22,72 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @RequiredArgsConstructor
 public class DataFetcherService {
 
-    private final static String DATA = "data";
     private final static String LINKS = "_links";
+    private final static String HREF = "href";
 
     private final RequestService requestService;
     private final ReferenceService referenceService;
-    
+    private final ReflectionService reflectionService;
+
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
         GraphQLObjectType objectType = (GraphQLObjectType) fieldDefinition.getType();
         FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
-        attachDataFetcherForQueryableObjects(builder, parentType, fieldDefinition, fintObject);
-        objectType.getFieldDefinitions().forEach(childFieldDefinition -> {
-            createDataFetchers(builder, objectType, childFieldDefinition, new HashSet<>());
+        createDataFetcher(builder, parentType, fieldDefinition, fintObject);
+        fintObject.getRelations().forEach(fintRelation -> {
+            testing(builder, fieldDefinition.getType(), fintRelation);
         });
     }
 
-    public void createDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, Set<String> fetchPath) {
-        if (fetchPath.contains(parentType.getName())) {
-            return;
-        }
-
-        fetchPath.add(parentType.getName());
-
-        if (fieldDefinition.getType() instanceof GraphQLObjectType objectType) {
-            attachDataFetchers(builder, objectType, parentType, fieldDefinition, fetchPath);
-        } else if (fieldDefinition.getType() instanceof GraphQLTypeReference typeReference) {
-            GraphQLObjectType relationFintObject = referenceService.getRelationFintObject(typeReference.getName());
-            attachDataFetchers(builder, relationFintObject, parentType, fieldDefinition, fetchPath);
-        } else {
-            builder.dataFetcher(parentType, fieldDefinition, getDataFromGraphQLContext(fieldDefinition));
-        }
-    }
-
-    public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType objectType, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, Set<String> fetchPath) {
-        FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
-        if (fintObject.isMainObject()) {
-            attachDataFetcherForRelation(builder, parentType, fieldDefinition);
-        }
-        objectType.getFieldDefinitions().forEach(childFieldDefinition -> createDataFetchers(
-                builder,
-                objectType,
-                childFieldDefinition,
-                fetchPath)
+    private void testing(GraphQLCodeRegistry.Builder builder, GraphQLOutputType parentType, FintRelation fintRelation) {
+        builder.dataFetcher(FieldCoordinates.coordinates(
+                        (GraphQLObjectType) parentType,
+                        fintRelation.relationName().toLowerCase()),
+                createDataFetcher(fintRelation)
         );
     }
-    
-    private void attachDataFetcherForRelation(GraphQLCodeRegistry.Builder builder,
-                                              GraphQLObjectType parentType,
-                                              GraphQLFieldDefinition fieldDefinition) {
-        builder.dataFetcher(parentType, fieldDefinition, environment -> {
-            return updateGraphQLContextData(environment, requestService.getResource(
-                    getRelationRequestUri(environment, fieldDefinition),
-                    environment.getGraphQlContext().get(AUTHORIZATION)
-            ));
-        });
+
+    private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
+        FintObject fintObject = reflectionService.getFintObject(fintRelation.packageName());
+        return environment -> {
+            return switch (fintRelation.multiplicity()) {
+                case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject);
+                default -> getFintRelationResource(environment, fintObject);
+            };
+        };
     }
 
-    private String getRelationRequestUri(DataFetchingEnvironment environment, GraphQLFieldDefinition fieldDefinition) {
-        Map<String, Object> contextData = environment.getGraphQlContext().get(DATA);
-        if (contextData.get(LINKS) instanceof Map<?,?> linksMap) {
-            Object linksObject = linksMap.get(fieldDefinition.getName().toLowerCase());
-
-            if (linksObject instanceof List<?>) {
-                List<Map<String, String>> linksList = (List<Map<String, String>>) linksObject;
-                if (!linksList.isEmpty() && linksList.get(0).containsKey("href")) {
-                    return linksList.get(0).get("href");
-                }
-            }
-        }
-        return null;
-    }
-
-    private void attachDataFetcherForQueryableObjects(GraphQLCodeRegistry.Builder builder,
-                                                      GraphQLObjectType parentType,
-                                                      GraphQLFieldDefinition fieldDefinition,
-                                                      FintObject fintObject) {
+    private void createDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
-            return updateGraphQLContextData(environment, requestService.getResource(
-                    createRequestUri(environment, fintObject),
-                    environment.getGraphQlContext().get(AUTHORIZATION)
-            ));
+            return getFintResource(environment, fintObject);
         });
     }
 
-    private CompletableFuture<Object> updateGraphQLContextData(DataFetchingEnvironment environment, Mono<ResponseEntity<Object>> resource) {
-        return resource.mapNotNull(responseEntity -> {
-            environment.getGraphQlContext().put(DATA, responseEntity.getBody());
-            return responseEntity.getBody();
-        }).toFuture();
+    private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject) {
+        return getRelationRequestUri(environment, fintObject).stream()
+                .map(link -> requestService.getResource(
+                        link,
+                        environment.getGraphQlContext().get(AUTHORIZATION))
+                ).toList().getFirst();
     }
 
-    private DataFetcher<?> getDataFromGraphQLContext(GraphQLFieldDefinition fieldDefinition) {
-        return env -> {
-            Map<String, Object> data = env.getGraphQlContext().get(DATA);
-            return data.get(fieldDefinition.getName());
-        };
+    private Object getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject) {
+        return getRelationRequestUri(environment, fintObject).stream()
+                .map(link -> requestService.getResource(
+                        link,
+                        environment.getGraphQlContext().get(AUTHORIZATION))
+                ).toList();
+    }
+
+    private Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+        return requestService.getResource(createRequestUri(environment, fintObject), environment.getGraphQlContext().get(AUTHORIZATION));
+    }
+
+    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
+        Map<String, Map<String, List<Map<String, String>>>> source = environment.getSource();
+        return source.get(LINKS).get(fintObject.getSimpleName()).stream()
+                .map(map -> map.get(HREF))
+                .toList();
     }
 
     private String createRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
