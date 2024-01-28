@@ -29,15 +29,19 @@ public class DataFetcherService {
     private final ReferenceService referenceService;
     private final ReflectionService reflectionService;
 
-    public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
+    public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
+                                   GraphQLObjectType parentType,
+                                   GraphQLFieldDefinition fieldDefinition) {
         FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
         createDataFetcher(builder, parentType, fieldDefinition, fintObject);
         fintObject.getRelations().forEach(fintRelation -> {
-            testing(builder, fieldDefinition.getType(), fintRelation);
+            createRelationDataFetcher(builder, fieldDefinition.getType(), fintRelation);
         });
     }
 
-    private void testing(GraphQLCodeRegistry.Builder builder, GraphQLOutputType parentType, FintRelation fintRelation) {
+    private void createRelationDataFetcher(GraphQLCodeRegistry.Builder builder,
+                                           GraphQLOutputType parentType,
+                                           FintRelation fintRelation) {
         builder.dataFetcher(FieldCoordinates.coordinates(
                         (GraphQLObjectType) parentType,
                         fintRelation.relationName().toLowerCase()),
@@ -53,7 +57,10 @@ public class DataFetcherService {
         };
     }
 
-    private void createDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, FintObject fintObject) {
+    private void createDataFetcher(GraphQLCodeRegistry.Builder builder,
+                                   GraphQLObjectType parentType,
+                                   GraphQLFieldDefinition fieldDefinition,
+                                   FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
             if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
@@ -80,7 +87,10 @@ public class DataFetcherService {
     }
 
     private Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
-        return requestService.getResource(createRequestUri(environment, fintObject), environment.getGraphQlContext().get(AUTHORIZATION));
+        return requestService.getResource(
+                createRequestUri(environment, fintObject),
+                environment.getGraphQlContext().get(AUTHORIZATION)
+        );
     }
 
     private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
@@ -105,7 +115,9 @@ public class DataFetcherService {
         if (environment.getGraphQlContext().hasKey(AUTHORIZATION)) {
             return;
         }
-        environment.getGraphQlContext().put(AUTHORIZATION, getAuthorizationValue(getServerHttpRequest(environment.getGraphQlContext())));
+        environment.getGraphQlContext().put(AUTHORIZATION,
+                getAuthorizationValue(getServerHttpRequest(environment.getGraphQlContext()))
+        );
     }
 
     private String getAuthorizationValue(ServerHttpRequest serverHttpRequest) {
