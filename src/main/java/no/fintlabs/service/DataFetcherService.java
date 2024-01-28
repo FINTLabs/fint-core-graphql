@@ -30,8 +30,7 @@ public class DataFetcherService {
     private final ReflectionService reflectionService;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition) {
-        GraphQLObjectType objectType = (GraphQLObjectType) fieldDefinition.getType();
-        FintObject fintObject = referenceService.getFintObject(objectType.hashCode());
+        FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
         createDataFetcher(builder, parentType, fieldDefinition, fintObject);
         fintObject.getRelations().forEach(fintRelation -> {
             testing(builder, fieldDefinition.getType(), fintRelation);
@@ -57,6 +56,9 @@ public class DataFetcherService {
     private void createDataFetcher(GraphQLCodeRegistry.Builder builder, GraphQLObjectType parentType, GraphQLFieldDefinition fieldDefinition, FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             setAuthorizationValueToContext(environment);
+            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
+                // TODO: CT-1158 Handle felles resources
+            }
             return getFintResource(environment, fintObject);
         });
     }
