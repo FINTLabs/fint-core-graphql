@@ -1,23 +1,17 @@
 package no.fintlabs.service;
 
-import graphql.GraphQLContext;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.exception.exceptions.BlockedAccessException;
 import no.fintlabs.exception.exceptions.MissingArgumentException;
-import no.fintlabs.exception.exceptions.MissingAuthorizationException;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ServerWebExchange;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -32,7 +26,7 @@ public class DataFetcherService {
     private final RequestService requestService;
     private final ReferenceService referenceService;
     private final ReflectionService reflectionService;
-    private final BlacklistService blacklistService;
+    private final ContextService contextService;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
                                    GraphQLObjectType parentType,
@@ -69,8 +63,9 @@ public class DataFetcherService {
                                    GraphQLFieldDefinition fieldDefinition,
                                    FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
-            checkIfUserIsBlocked(environment);
-            setAuthorizationValueToContext(environment);
+            contextService.checkIfUserIsBlocked(environment);
+            contextService.setAuthorizationValueToContext(environment);
+
             if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
                 // TODO: CT-1158 Handle felles resources
             }
@@ -78,14 +73,8 @@ public class DataFetcherService {
         });
     }
 
-    private void checkIfUserIsBlocked(DataFetchingEnvironment environment) {
-        ServerHttpRequest serverHttpRequest = getServerHttpRequest(environment.getGraphQlContext());
-        if (blacklistService.isBlacklisted(serverHttpRequest.getRemoteAddress().getAddress().getHostAddress())) {
-            throw new BlockedAccessException();
-        }
-    }
-
     private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+        log.info("Getting one resource");
         return getRelationRequestUri(environment, fintObject, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
@@ -93,7 +82,8 @@ public class DataFetcherService {
                 ).toList().getFirst();
     }
 
-    private Object getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+    private List<Object> getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+        log.info("Getting many resources");
         return getRelationRequestUri(environment, fintObject, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
@@ -112,11 +102,11 @@ public class DataFetcherService {
         Map<String, Map<String, List<Map<String, String>>>> source = environment.getSource();
         Map<String, List<Map<String, String>>> linksMap = source.get(LINKS);
 
-        if (linksMap == null || !linksMap.containsKey(fintObject.getSimpleName()) || linksMap.get(fintObject.getSimpleName()).isEmpty()) {
+        if (linksMap == null || !linksMap.containsKey(fieldName) || linksMap.get(fieldName).isEmpty()) {
             throw new MissingLinkException(fieldName);
         }
 
-        return linksMap.get(fintObject.getSimpleName()).stream()
+        return linksMap.get(fieldName).stream()
                 .map(map -> map.get(HREF))
                 .toList();
     }
@@ -130,27 +120,6 @@ public class DataFetcherService {
         return environment.getArguments().entrySet().stream()
                 .findFirst()
                 .orElseThrow(MissingArgumentException::new);
-    }
-
-    private void setAuthorizationValueToContext(DataFetchingEnvironment environment) {
-        if (environment.getGraphQlContext().hasKey(AUTHORIZATION)) {
-            return;
-        }
-        environment.getGraphQlContext().put(AUTHORIZATION,
-                getAuthorizationValue(getServerHttpRequest(environment.getGraphQlContext()))
-        );
-    }
-
-    private String getAuthorizationValue(ServerHttpRequest serverHttpRequest) {
-        return Optional.ofNullable(serverHttpRequest.getHeaders().get(AUTHORIZATION))
-                .map(List::getFirst)
-                .orElseThrow(MissingAuthorizationException::new);
-    }
-
-    private ServerHttpRequest getServerHttpRequest(GraphQLContext ctx) {
-        return Optional.ofNullable(ctx.<ServerWebExchange>get(ServerWebExchange.class))
-                .map(ServerWebExchange::getRequest)
-                .orElseThrow(() -> new RuntimeException("ServerWebExchange not found in GraphQLContext"));
     }
 
 }

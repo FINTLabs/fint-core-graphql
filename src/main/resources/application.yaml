@@ -7,3 +7,4 @@ fint:
 logging:
   level:
     notprivacysafe.graphql.GraphQL: ERROR
+    no.fintlabs: DEBUG
