@@ -55,7 +55,7 @@ jobs:
     strategy:
       matrix:
         org:
-          - rogfk-no
+          - fint-core
         cluster:
 #          - aks-alpha-fint-2021-11-18
           - aks-beta-fint-2021-11-23
