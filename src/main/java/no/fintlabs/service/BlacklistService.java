@@ -15,8 +15,9 @@ public class BlacklistService {
     private Set<String> blacklistedIpaddresses;
 
     @PostConstruct
-    public void test() {
-        log.info(blacklistedIpaddresses.toString());
+    public void logIpAddresses() {
+        log.info("Blocked ip addresses: ");
+        blacklistedIpaddresses.forEach(log::info);
     }
 
     public boolean isBlacklisted(String ipAddress) {
