@@ -14,9 +14,9 @@ public enum Multiplicity {
     }
 
     public static Multiplicity fromLabel(String label) {
-        for (Multiplicity m : Multiplicity.values()) {
-            if (m.label.equals(label)) {
-                return m;
+        for (Multiplicity multiplicity : Multiplicity.values()) {
+            if (multiplicity.label.equals(label)) {
+                return multiplicity;
             }
         }
         throw new IllegalArgumentException("Unexpected multiplicity: " + label);
