@@ -6,7 +6,7 @@ metadata:
 spec:
   env:
     - name: fint.graphql.baseurl
-      value: beta.felleskomponent.no
+      value: https://beta.felleskomponent.no
   url:
     hostname: beta.felleskomponent.no
     basePath: /core/graphql
