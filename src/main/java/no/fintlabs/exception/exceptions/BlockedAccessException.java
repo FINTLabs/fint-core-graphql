@@ -1,4 +1,4 @@
-package no.fintlabs.exceptions;
+package no.fintlabs.exception.exceptions;
 
 public class BlockedAccessException extends RuntimeException implements FintGraphQLException {
 

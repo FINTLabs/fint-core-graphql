@@ -1,4 +1,4 @@
-package no.fintlabs.config;
+package no.fintlabs.exception;
 
 import graphql.ErrorClassification;
 import graphql.GraphQLError;
@@ -8,14 +8,14 @@ import graphql.execution.DataFetcherExceptionHandlerResult;
 import graphql.execution.ResultPath;
 import graphql.language.SourceLocation;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.exceptions.FintGraphQLException;
+import no.fintlabs.exception.exceptions.FintGraphQLException;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.concurrent.CompletableFuture;
 
 @Configuration
 @Slf4j
-public class DataFetcherExceptionHandlerConfig implements DataFetcherExceptionHandler {
+public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHandler {
 
     @Override
     public CompletableFuture<DataFetcherExceptionHandlerResult> handleException(

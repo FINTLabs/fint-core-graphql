@@ -1,4 +1,4 @@
-package no.fintlabs.exceptions;
+package no.fintlabs.exception.exceptions;
 
 public interface FintGraphQLException {
 }
