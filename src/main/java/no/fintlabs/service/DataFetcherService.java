@@ -4,6 +4,7 @@ import graphql.GraphQLContext;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.exceptions.BlockedAccessException;
 import no.fintlabs.exceptions.MissingArgumentException;
 import no.fintlabs.exceptions.MissingAuthorizationException;
 import no.fintlabs.exceptions.MissingLinkException;
@@ -14,7 +15,9 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -29,6 +32,7 @@ public class DataFetcherService {
     private final RequestService requestService;
     private final ReferenceService referenceService;
     private final ReflectionService reflectionService;
+    private final BlacklistService blacklistService;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
                                    GraphQLObjectType parentType,
@@ -65,12 +69,20 @@ public class DataFetcherService {
                                    GraphQLFieldDefinition fieldDefinition,
                                    FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
+            checkIfUserIsBlocked(environment);
             setAuthorizationValueToContext(environment);
             if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
                 // TODO: CT-1158 Handle felles resources
             }
             return getFintResource(environment, fintObject);
         });
+    }
+
+    private void checkIfUserIsBlocked(DataFetchingEnvironment environment) {
+        ServerHttpRequest serverHttpRequest = getServerHttpRequest(environment.getGraphQlContext());
+        if (blacklistService.isBlacklisted(serverHttpRequest.getRemoteAddress().getAddress().getHostAddress())) {
+            throw new BlockedAccessException();
+        }
     }
 
     private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
