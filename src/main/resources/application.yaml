@@ -1,1 +1,3 @@
-
+logging:
+  level:
+    notprivacysafe.graphql.GraphQL: ERROR

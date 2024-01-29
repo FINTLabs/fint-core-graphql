@@ -1,6 +1,7 @@
 package no.fintlabs.config;
 
 import graphql.GraphQL;
+import graphql.execution.DataFetcherExceptionHandler;
 import graphql.schema.GraphQLCodeRegistry;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -15,8 +16,10 @@ import java.util.Set;
 public class SchemaConfig {
 
     @Bean
-    public GraphQL graphQL(GraphQLSchema graphQLSchema) {
-        return GraphQL.newGraphQL(graphQLSchema).build();
+    public GraphQL graphQL(GraphQLSchema graphQLSchema, DataFetcherExceptionHandler dataFetcherExceptionHandler) {
+        return GraphQL.newGraphQL(graphQLSchema)
+                .defaultDataFetcherExceptionHandler(dataFetcherExceptionHandler)
+                .build();
     }
 
     @Bean
