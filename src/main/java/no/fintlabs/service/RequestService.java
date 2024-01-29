@@ -2,7 +2,7 @@ package no.fintlabs.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import no.fintlabs.config.RestClientConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -13,13 +13,11 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Slf4j
 public class RequestService {
 
-    @Value("${fint.graphql.base-url:https://play-with-fint.felleskomponent.no}")
-    private String baseUrl;
-
-    private final RestClient restClient = RestClient.builder().baseUrl(baseUrl).build();
+    private final RestClient restClient;
+    private final RestClientConfig restclientConfig;
 
     public Object getResource(String uri, String authorizationValue) {
-        log.debug("Requesting url: {}{}", baseUrl, uri);
+        log.debug("Requesting url: {}{}", restclientConfig.getBaseUrl(), uri);
         return restClient.get()
                 .uri(uri)
                 .header(AUTHORIZATION, authorizationValue)
