@@ -31,7 +31,6 @@ public class DataFetcherService {
 
     private final RequestService requestService;
     private final ReferenceService referenceService;
-    private final ReflectionService reflectionService;
     private final BlacklistService blacklistService;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
@@ -55,12 +54,11 @@ public class DataFetcherService {
     }
 
     private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
-        FintObject fintObject = reflectionService.getFintObject(fintRelation.packageName());
         String fieldName = fintRelation.relationName().toLowerCase();
 
         return environment -> switch (fintRelation.multiplicity()) {
-            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject, fieldName);
-            default -> getFintRelationResource(environment, fintObject, fieldName);
+            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fieldName);
+            default -> getFintRelationResource(environment, fieldName);
         };
     }
 
@@ -85,16 +83,16 @@ public class DataFetcherService {
         }
     }
 
-    private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
-        return getRelationRequestUri(environment, fintObject, fieldName).stream()
+    private Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
+        return getRelationRequestUri(environment, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
                 ).toList().getFirst();
     }
 
-    private Object getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
-        return getRelationRequestUri(environment, fintObject, fieldName).stream()
+    private Object getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
+        return getRelationRequestUri(environment, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
@@ -108,15 +106,15 @@ public class DataFetcherService {
         );
     }
 
-    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, String fieldName) {
         Map<String, Map<String, List<Map<String, String>>>> source = environment.getSource();
         Map<String, List<Map<String, String>>> linksMap = source.get(LINKS);
 
-        if (linksMap == null || !linksMap.containsKey(fintObject.getSimpleName()) || linksMap.get(fintObject.getSimpleName()).isEmpty()) {
+        if (linksMap == null || !linksMap.containsKey(fieldName) || linksMap.get(fieldName).isEmpty()) {
             throw new MissingLinkException(fieldName);
         }
 
-        return linksMap.get(fintObject.getSimpleName()).stream()
+        return linksMap.get(fieldName).stream()
                 .map(map -> map.get(HREF))
                 .toList();
     }
