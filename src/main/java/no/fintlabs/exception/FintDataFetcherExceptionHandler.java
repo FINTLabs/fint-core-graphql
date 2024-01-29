@@ -1,6 +1,7 @@
 package no.fintlabs.exception;
 
 import graphql.ErrorClassification;
+import graphql.GraphQLContext;
 import graphql.GraphQLError;
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.DataFetcherExceptionHandlerParameters;
@@ -8,6 +9,7 @@ import graphql.execution.DataFetcherExceptionHandlerResult;
 import graphql.execution.ResultPath;
 import graphql.language.SourceLocation;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.FintGraphQLException;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,8 +23,9 @@ public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHand
     public CompletableFuture<DataFetcherExceptionHandlerResult> handleException(
             DataFetcherExceptionHandlerParameters handlerParameters) {
         Throwable exception = handlerParameters.getException();
+        CorePrincipal corePrincipal = handlerParameters.getDataFetchingEnvironment().getGraphQlContext().get(CorePrincipal.class);
 
-        logException(exception);
+        logException(exception, corePrincipal);
 
         return CompletableFuture.completedFuture(exceptionHandlerResult(
                 exception,
@@ -46,11 +49,13 @@ public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHand
                 .build();
     }
 
-    private void logException(Throwable exception) {
+    private void logException(Throwable exception, CorePrincipal corePrincipal) {
+        String username = corePrincipal.getUsername();
+
         if (exception instanceof FintGraphQLException) {
-            log.error("{}: {}", "bob", exception.getMessage());
+            log.error("{}: {}", username, exception.getMessage());
         } else {
-            log.error("An unexpected exception occurred: ", exception);
+            log.error("{}: An unexpected exception occurred: ", username, exception);
         }
     }
 

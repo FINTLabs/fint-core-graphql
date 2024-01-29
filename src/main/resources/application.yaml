@@ -1,3 +1,9 @@
+fint:
+  security:
+    component: false
+    orgid: false
+    scope: false
+
 logging:
   level:
     notprivacysafe.graphql.GraphQL: ERROR
