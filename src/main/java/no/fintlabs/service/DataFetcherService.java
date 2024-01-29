@@ -35,6 +35,21 @@ public class DataFetcherService {
         });
     }
 
+    private void createDataFetcher(GraphQLCodeRegistry.Builder builder,
+                                   GraphQLObjectType parentType,
+                                   GraphQLFieldDefinition fieldDefinition,
+                                   FintObject fintObject) {
+        builder.dataFetcher(parentType, fieldDefinition, environment -> {
+            contextService.checkIfUserIsBlocked(environment);
+            contextService.setAuthorizationValueToContext(environment);
+
+            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
+                // TODO: CT-1158 Handle felles resources
+            }
+            return getFintResource(environment, fintObject);
+        });
+    }
+
     private void createRelationDataFetcher(GraphQLCodeRegistry.Builder builder,
                                            GraphQLOutputType parentType,
                                            FintRelation fintRelation) {
@@ -54,19 +69,11 @@ public class DataFetcherService {
         };
     }
 
-    private void createDataFetcher(GraphQLCodeRegistry.Builder builder,
-                                   GraphQLObjectType parentType,
-                                   GraphQLFieldDefinition fieldDefinition,
-                                   FintObject fintObject) {
-        builder.dataFetcher(parentType, fieldDefinition, environment -> {
-            contextService.checkIfUserIsBlocked(environment);
-            contextService.setAuthorizationValueToContext(environment);
-
-            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
-                // TODO: CT-1158 Handle felles resources
-            }
-            return getFintResource(environment, fintObject);
-        });
+    private Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+        return requestService.getResource(
+                createRequestUri(environment, fintObject),
+                environment.getGraphQlContext().get(AUTHORIZATION)
+        );
     }
 
     private Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
@@ -79,13 +86,6 @@ public class DataFetcherService {
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
                 ).toList();
-    }
-
-    private Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
-        return requestService.getResource(
-                createRequestUri(environment, fintObject),
-                environment.getGraphQlContext().get(AUTHORIZATION)
-        );
     }
 
     private List<String> getRelationRequestUri(DataFetchingEnvironment environment, String fieldName) {
