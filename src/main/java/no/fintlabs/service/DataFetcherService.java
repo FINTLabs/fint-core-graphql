@@ -3,9 +3,7 @@ package no.fintlabs.service;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.exception.exceptions.MissingArgumentException;
 import no.fintlabs.exception.exceptions.MissingLinkException;
-import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
 import org.springframework.stereotype.Service;
@@ -25,7 +23,6 @@ public class DataFetcherService {
 
     private final RequestService requestService;
     private final ReferenceService referenceService;
-    private final ReflectionService reflectionService;
     private final ContextService contextService;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
@@ -49,12 +46,11 @@ public class DataFetcherService {
     }
 
     private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
-        FintObject fintObject = reflectionService.getFintObject(fintRelation.packageName());
         String fieldName = fintRelation.relationName().toLowerCase();
 
         return environment -> switch (fintRelation.multiplicity()) {
-            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fintObject, fieldName);
-            default -> getFintRelationResource(environment, fintObject, fieldName);
+            case ONE_TO_MANY, ZERO_TO_MANY -> getFintRelationResources(environment, fieldName);
+            default -> getFintRelationResource(environment, fieldName);
         };
     }
 
@@ -73,18 +69,12 @@ public class DataFetcherService {
         });
     }
 
-    private Object getFintRelationResource(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
-        log.info("Getting one resource");
-        return getRelationRequestUri(environment, fintObject, fieldName).stream()
-                .map(link -> requestService.getResource(
-                        link,
-                        environment.getGraphQlContext().get(AUTHORIZATION))
-                ).toList().getFirst();
+    private Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
+        return getFintRelationResources(environment, fieldName).getFirst();
     }
 
-    private List<Object> getFintRelationResources(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
-        log.info("Getting many resources");
-        return getRelationRequestUri(environment, fintObject, fieldName).stream()
+    private List<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
+        return getRelationRequestUri(environment, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
                         environment.getGraphQlContext().get(AUTHORIZATION))
@@ -98,7 +88,7 @@ public class DataFetcherService {
         );
     }
 
-    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, FintObject fintObject, String fieldName) {
+    private List<String> getRelationRequestUri(DataFetchingEnvironment environment, String fieldName) {
         Map<String, Map<String, List<Map<String, String>>>> source = environment.getSource();
         Map<String, List<Map<String, String>>> linksMap = source.get(LINKS);
 
@@ -112,14 +102,8 @@ public class DataFetcherService {
     }
 
     private String createRequestUri(DataFetchingEnvironment environment, FintObject fintObject) {
-        Map.Entry<String, Object> firstArgument = getFirstArgument(environment);
+        Map.Entry<String, Object> firstArgument = contextService.getFirstArgument(environment);
         return String.format("%s/%s/%s", fintObject.getResourceUrl(), firstArgument.getKey(), firstArgument.getValue());
-    }
-
-    private Map.Entry<String, Object> getFirstArgument(DataFetchingEnvironment environment) {
-        return environment.getArguments().entrySet().stream()
-                .findFirst()
-                .orElseThrow(MissingArgumentException::new);
     }
 
 }
