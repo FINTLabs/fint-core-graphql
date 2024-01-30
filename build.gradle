@@ -33,7 +33,6 @@ dependencies {
     implementation "no.fint:fint-okonomi-model-java:${FINT_Version}"
     implementation "no.fint:fint-personvern-model-java:${FINT_Version}"
 
-    implementation 'com.graphql-java-kickstart:graphql-spring-boot-starter:15.0.0'
     implementation 'com.graphql-java:graphql-java:21.3'
     implementation 'org.reflections:reflections:0.10.2'
 
