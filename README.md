@@ -4,27 +4,26 @@
 This project is designed as an improvement upon fint-graphql, with a specific focus on enhancing the way GraphQL schemas are created. 
 By employing Java reflection to dynamically generate schemas from Information model objects.
 
-## Reflection
-The main functionality of this project is using Java reflection.
-ReflectionService looks into any Java classes that inherits the FintObject interface at 'no.fint.model'
-For every FintObject found we create a FintObject.
+## Usage
+The GraphQL Schema follows the structure of FINT Informationmodel.
+We do not support the first query to fetch multiple resources, so you need to specify which resource you want to get by using their Identifikator argument.
+```graphql
+query getElevGjest {
+  Elev(elevnummer: "123") {
+    gjest
+  }
+}
+```
+Please take note that only the first argument will get used, so any other argument coming after will be ignored.
 
-### FintObject
-Not to be confused with the FintObject interface in the fint model libraries, this object contains the information we need to create a GraphQLType for every object.
-#### Fields:
-* boolean isMainObject: if the original object is assignable from FintMainObject (The objects that should be queryable)
-* String name: unique name for the FintObject
-* String packageName: full path to original object (is used as key to get FintObjects)
-* String domainName: domain name is the first package after no.fint.model (no.fint.model.utdanning.vurdering.Fravar = utdanning)
-* List<Field> fields: contains all Java fields
-* List<FintRelation> relations: contains all relations
-* Set<String> identificatorFields: contains all identificator field names
-
-
-### FintRelation
-Some objects may have a relation to other objects.
-For example a Student in FINT has a relation to Person.
-#### Fields:
-* String relationName: the name of the relation (this may not be equal to the actual type used)
-* String packageName: the full path to the Fint object it relates to
-* String multiplicity: information about the multiplicity (0..1 is 0 to 1) [Not in use at the moment]**
+Even though you can only specify one element at the first query, doesn't mean you can only get one reference at a time.
+```graphql
+query getSkoler {
+	Skole(systemId: "1579") {
+		basisgruppe {
+      navn
+    }
+	}
+}
+```
+This would get all the basisgrupper for that resource, which could be a lot depending on the resource.
