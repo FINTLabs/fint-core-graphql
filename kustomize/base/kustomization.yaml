@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: fint-core
+resources:
+  - application.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/name: fint-core-graphql
+      app.kubernetes.io/instance: fint-core-graphql_fint-core
+      app.kubernetes.io/version: latest
+      app.kubernetes.io/component: graphql
+      app.kubernetes.io/part-of: fint-core
+      fintlabs.no/team: core
+      fintlabs.no/org-id: fint-core
