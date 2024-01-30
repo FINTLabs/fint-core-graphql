@@ -57,10 +57,10 @@ jobs:
         org:
           - fint-core
         cluster:
-#          - aks-alpha-fint-2021-11-18
+          - aks-alpha-fint-2021-11-18
           - aks-beta-fint-2021-11-23
-#          - aks-api-fint-2022-02-08
-#          - aks-pwf-fint-2021-10-20
+          - aks-api-fint-2022-02-08
+          - aks-pwf-fint-2021-10-20
 
     steps:
       - name: Checkout repository
@@ -103,6 +103,12 @@ jobs:
           resource-group: '${{ steps.resource-group.outputs.result }}'
           admin: 'true'
           use-kubelogin: 'true'
+
+      - name: Create Namespace if it doesn't exist
+        run: |
+          if ! kubectl get namespace ${{ matrix.org }}; then
+            kubectl create namespace ${{ matrix.org }}
+          fi
 
       - name: Deploy
         uses: azure/k8s-deploy@v4.9

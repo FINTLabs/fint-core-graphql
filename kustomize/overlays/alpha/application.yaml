@@ -1,0 +1,12 @@
+apiVersion: fintlabs.no/v1alpha1
+kind: Application
+metadata:
+  name: fint-core-graphql
+  namespace: fint-core
+spec:
+  env:
+    - name: fint.graphql.baseurl
+      value: https://alpha.felleskomponent.no
+  url:
+    hostname: alpha.felleskomponent.no
+    basePath: /core/graphql
