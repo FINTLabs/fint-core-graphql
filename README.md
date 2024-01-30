@@ -19,11 +19,11 @@ Please take note that only the first argument will get used, so any other argume
 Even though you can only specify one element at the first query, doesn't mean you can only get one reference at a time.
 ```graphql
 query getSkoler {
-	Skole(systemId: "1579") {
-		basisgruppe {
+  Skole(systemId: "1579") {
+    basisgruppe {
       navn
     }
-	}
+  }
 }
 ```
 This would get all the basisgrupper for that resource, which could be a lot depending on the resource.
