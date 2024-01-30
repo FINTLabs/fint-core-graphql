@@ -1,7 +1,6 @@
 package no.fintlabs.exception;
 
 import graphql.ErrorClassification;
-import graphql.GraphQLContext;
 import graphql.GraphQLError;
 import graphql.execution.DataFetcherExceptionHandler;
 import graphql.execution.DataFetcherExceptionHandlerParameters;
@@ -9,23 +8,22 @@ import graphql.execution.DataFetcherExceptionHandlerResult;
 import graphql.execution.ResultPath;
 import graphql.language.SourceLocation;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.FintGraphQLException;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.concurrent.CompletableFuture;
 
-@Configuration
 @Slf4j
+@Service
 public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHandler {
 
     @Override
     public CompletableFuture<DataFetcherExceptionHandlerResult> handleException(
             DataFetcherExceptionHandlerParameters handlerParameters) {
         Throwable exception = handlerParameters.getException();
-        CorePrincipal corePrincipal = handlerParameters.getDataFetchingEnvironment().getGraphQlContext().get(CorePrincipal.class);
 
-        logException(exception, corePrincipal);
+        logException(exception);
 
         return CompletableFuture.completedFuture(exceptionHandlerResult(
                 exception,
@@ -49,13 +47,13 @@ public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHand
                 .build();
     }
 
-    private void logException(Throwable exception, CorePrincipal corePrincipal) {
-        String username = corePrincipal.getUsername();
-
+    private void logException(Throwable exception) {
         if (exception instanceof FintGraphQLException) {
-            log.error("{}: {}", username, exception.getMessage());
+            log.error(exception.getMessage());
+        } else if (exception instanceof HttpClientErrorException) {
+            log.error(exception.getMessage());
         } else {
-            log.error("{}: An unexpected exception occurred: ", username, exception);
+            log.error("An unexpected exception occurred: ", exception);
         }
     }
 
