@@ -3,6 +3,7 @@ package no.fintlabs.service;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.config.RestClientConfig;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -24,6 +25,7 @@ public class DataFetcherService {
     private final RequestService requestService;
     private final ReferenceService referenceService;
     private final ContextService contextService;
+    private final RestClientConfig restClientConfig;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
                                    GraphQLObjectType parentType,
@@ -97,7 +99,7 @@ public class DataFetcherService {
         }
 
         return linksMap.get(fieldName).stream()
-                .map(map -> map.get(HREF))
+                .map(map -> map.get(HREF).replace(restClientConfig.getBaseUrl(), ""))
                 .toList();
     }
 
