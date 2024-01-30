@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fint-core-graphql
+  namespace: fint-core
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fint-core-graphql
+  template:
+    metadata:
+      labels:
+        app: fint-core-graphql
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: fint-core-graphql
+          image: ghcr.io/fintlabs/fint-core-graphql:latest
+          imagePullPolicy: Always
+          env:
+            - name: fint.core.graphql.base-url
+              value: https://play-with-fint.felleskomponent.no
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"

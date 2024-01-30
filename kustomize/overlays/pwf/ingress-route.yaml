@@ -1,0 +1,13 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: fint-core-graphql
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`play-with-fint.felleskomponent.no`) && PathPrefix(`/core/graphql`)
+      kind: Rule
+      services:
+        - name: fint-core-graphql
+          port: 8080
