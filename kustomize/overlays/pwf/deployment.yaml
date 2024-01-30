@@ -4,7 +4,6 @@ metadata:
   name: fint-core-graphql
   namespace: fint-core
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: fint-core-graphql
@@ -13,11 +12,9 @@ spec:
       labels:
         app: fint-core-graphql
     spec:
-      restartPolicy: Always
       containers:
         - name: fint-core-graphql
           image: ghcr.io/fintlabs/fint-core-graphql:latest
-          imagePullPolicy: Always
           env:
             - name: fint.core.graphql.base-url
               value: https://play-with-fint.felleskomponent.no
