@@ -4,6 +4,7 @@ import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.config.RestClientConfig;
+import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -22,6 +23,7 @@ public class DataFetcherService {
     private final static String LINKS = "_links";
     private final static String HREF = "href";
 
+    private final EndpointService endpointService;
     private final RequestService requestService;
     private final ReferenceService referenceService;
     private final ContextService contextService;
@@ -46,6 +48,7 @@ public class DataFetcherService {
             contextService.setAuthorizationValueToContext(environment);
 
             if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
+                return getCommonFintResource(environment, fintObject);
                 // TODO: CT-1158 Handle felles resources
             }
             return getFintResource(environment, fintObject);
@@ -71,10 +74,35 @@ public class DataFetcherService {
         };
     }
 
+    private Object getCommonFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+        CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
+        List<Object> list = endpointService.getEndpoints(fintObject.getPackageName()).stream()
+                .filter(endpoint -> hasAccess(endpoint, corePrincipal))
+                .map(endpoint -> requestService.getCommonResource(
+                        endpoint,
+                        environment.getGraphQlContext().get(AUTHORIZATION),
+                        corePrincipal.getUsername())
+                ).toList();
+
+        // Request to all the endpoints and collect the responses in a list
+
+        // Merge all the data
+
+        // return the data
+        return null;
+    }
+
+    private boolean hasAccess(String string, CorePrincipal corePrincipal) {
+        String[] split = string.split("/");
+        return corePrincipal.getRoles().contains(String.format("FINT_Client_%s_%s", split[1], split[2]));
+    }
+
     private Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+        CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
         return requestService.getResource(
                 createRequestUri(environment, fintObject),
-                environment.getGraphQlContext().get(AUTHORIZATION)
+                environment.getGraphQlContext().get(AUTHORIZATION),
+                corePrincipal.getUsername()
         );
     }
 
@@ -83,10 +111,12 @@ public class DataFetcherService {
     }
 
     private List<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
+        CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
         return getRelationRequestUri(environment, fieldName).stream()
                 .map(link -> requestService.getResource(
                         link,
-                        environment.getGraphQlContext().get(AUTHORIZATION))
+                        environment.getGraphQlContext().get(AUTHORIZATION),
+                        corePrincipal.getUsername())
                 ).toList();
     }
 

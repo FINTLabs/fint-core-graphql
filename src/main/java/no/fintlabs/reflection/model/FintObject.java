@@ -15,9 +15,11 @@ public class FintObject {
 
     private final boolean isMainObject;
     private final boolean isAbstract;
+    private final boolean isCommon;
     private final String name;
     private final String simpleName;
     private final String packageName;
+    private final String componentUri;
     private final String domainName;
     private final String resourceUrl;
     private final List<Field> fields;
@@ -25,22 +27,27 @@ public class FintObject {
     private final Set<String> identificatorFields;
 
     public FintObject(Class<?> clazz, boolean hasUniqueName) {
-        this.packageName = clazz.getName();
-        this.domainName = setDomainName();
-        this.name = setName(clazz, hasUniqueName);
-        this.fields = getAllFields(clazz);
-        this.resourceUrl = setResourceUrl(clazz);
-        this.relations = getAllRelations(clazz);
-        this.isMainObject = setIsMainObject(clazz);
-        this.identificatorFields = setIdentificatorFields();
-        this.isAbstract = Modifier.isAbstract(clazz.getModifiers());
-        this.simpleName = clazz.getSimpleName().toLowerCase();
+        packageName = clazz.getName();
+        domainName = setDomainName();
+        isCommon = domainName.equalsIgnoreCase("felles");
+        name = setName(clazz, hasUniqueName);
+        fields = getAllFields(clazz);
+        componentUri = setComponentUri(clazz);
+        resourceUrl = setResourceUrl(clazz);
+        relations = getAllRelations(clazz);
+        isMainObject = setIsMainObject(clazz);
+        identificatorFields = setIdentificatorFields();
+        isAbstract = Modifier.isAbstract(clazz.getModifiers());
+        simpleName = clazz.getSimpleName().toLowerCase();
+    }
+
+    private String setComponentUri(Class<?> clazz) {
+        String[] parts = clazz.getName().split("\\.");
+        return "/" + String.join("/", Arrays.copyOfRange(parts, 3, 5));
     }
 
     private String setResourceUrl(Class<?> clazz) {
-        String[] parts = clazz.getName().split("\\.");
-        String component = String.join("/", Arrays.copyOfRange(parts, 3, 5));
-        return String.format("/%s/%s", component, clazz.getSimpleName().toLowerCase());
+        return String.format("%s/%s", componentUri, clazz.getSimpleName().toLowerCase());
     }
 
     private boolean setIsMainObject(Class<?> clazz) {
