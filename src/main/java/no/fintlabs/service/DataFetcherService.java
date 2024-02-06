@@ -8,10 +8,14 @@ import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
+import no.fintlabs.service.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
@@ -28,6 +32,7 @@ public class DataFetcherService {
     private final ReferenceService referenceService;
     private final ContextService contextService;
     private final RestClientConfig restClientConfig;
+    private final ResourceAssembler resourceAssembler;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
                                    GraphQLObjectType parentType,
@@ -76,21 +81,26 @@ public class DataFetcherService {
 
     private Object getCommonFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
         CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
-        List<Object> list = endpointService.getEndpoints(fintObject.getPackageName()).stream()
+        Map.Entry<String, Object> firstArgument = contextService.getFirstArgument(environment);
+
+        List<Object> resources = endpointService.getEndpoints(fintObject.getPackageName()).stream()
                 .filter(endpoint -> hasAccess(endpoint, corePrincipal))
-                .map(endpoint -> requestService.getCommonResource(
-                        endpoint,
-                        environment.getGraphQlContext().get(AUTHORIZATION),
-                        corePrincipal.getUsername())
-                ).toList();
+                .map(endpoint -> buildResourceUri(endpoint, firstArgument))
+                .map(uri -> requestService.getCommonResource(uri, getAuthorizationToken(environment), corePrincipal.getUsername()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        // Request to all the endpoints and collect the responses in a list
-
-        // Merge all the data
-
-        // return the data
-        return null;
+        return resources.isEmpty() ? Collections.emptyList() : resourceAssembler.mergeContent(resources);
     }
+
+    private String buildResourceUri(String endpoint, Map.Entry<String, Object> firstArgument) {
+        return String.format("%s/%s/%s", endpoint, firstArgument.getKey(), firstArgument.getValue());
+    }
+
+    private String getAuthorizationToken(DataFetchingEnvironment environment) {
+        return environment.getGraphQlContext().get(AUTHORIZATION);
+    }
+
 
     private boolean hasAccess(String string, CorePrincipal corePrincipal) {
         String[] split = string.split("/");
