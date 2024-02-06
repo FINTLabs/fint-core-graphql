@@ -4,6 +4,11 @@ fint:
     org-id: false
     scope: false
 
+spring:
+  threads:
+    virtual:
+      enabled: true
+
 logging:
   level:
     notprivacysafe.graphql.GraphQL: ERROR
