@@ -10,7 +10,7 @@ import java.util.Map;
 public class ResourceAssembler {
 
     public Object mergeContent(List<Object> resources) {
-        LinkedHashMap<String, Object> firstResource = castToLinkedHashMap(resources.get(0));
+        LinkedHashMap<String, Object> firstResource = castToLinkedHashMap(resources.getFirst());
         LinkedHashMap<String, List<Map<String, String>>> consolidatedLinks = getLinks(firstResource);
 
         resources.stream().skip(1)
