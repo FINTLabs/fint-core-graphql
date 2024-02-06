@@ -1,4 +1,4 @@
-package no.fintlabs.service;
+package no.fintlabs.config;
 
 import graphql.ExecutionResult;
 import graphql.execution.instrumentation.Instrumentation;
