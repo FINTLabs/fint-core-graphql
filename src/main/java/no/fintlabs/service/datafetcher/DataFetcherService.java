@@ -1,10 +1,11 @@
-package no.fintlabs.service;
+package no.fintlabs.service.datafetcher;
 
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
+import no.fintlabs.service.ReferenceService;
 import org.springframework.stereotype.Service;
 
 @Service

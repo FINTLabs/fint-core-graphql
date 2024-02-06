@@ -1,4 +1,4 @@
-package no.fintlabs.service;
+package no.fintlabs.service.datafetcher;
 
 import graphql.GraphQLContext;
 import graphql.schema.DataFetchingEnvironment;
@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import no.fintlabs.exception.exceptions.BlockedAccessException;
 import no.fintlabs.exception.exceptions.MissingArgumentException;
 import no.fintlabs.exception.exceptions.MissingAuthorizationException;
+import no.fintlabs.service.BlacklistService;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ServerWebExchange;

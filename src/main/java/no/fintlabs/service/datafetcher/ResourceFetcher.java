@@ -1,4 +1,4 @@
-package no.fintlabs.service;
+package no.fintlabs.service.datafetcher;
 
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
@@ -6,6 +6,10 @@ import no.fintlabs.config.RestClientConfig;
 import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.model.FintObject;
+import no.fintlabs.service.EndpointService;
+import no.fintlabs.service.RequestService;
+import no.fintlabs.service.ResourceAssembler;
+import no.fintlabs.service.datafetcher.ContextService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
