@@ -83,8 +83,8 @@ public class ResourceFetcher {
                 .toList();
     }
 
-    private boolean hasAccess(String string, CorePrincipal corePrincipal) {
-        String[] split = string.split("/");
+    private boolean hasAccess(String endpoint, CorePrincipal corePrincipal) {
+        String[] split = endpoint.split("/");
         return corePrincipal.getRoles().contains(String.format("FINT_Client_%s_%s", split[1], split[2]));
     }
 
