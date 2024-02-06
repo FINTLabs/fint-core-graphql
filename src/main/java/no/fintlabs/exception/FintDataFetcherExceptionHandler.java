@@ -51,7 +51,7 @@ public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHand
 
     private void logException(Throwable exception, CorePrincipal corePrincipal) {
         if (exception instanceof FintGraphQLException || exception instanceof HttpClientErrorException) {
-            log.error("{}: {}", corePrincipal.getName(), exception.getMessage());
+            log.error("{}: {}", corePrincipal.getUsername(), exception.getMessage());
         } else {
             log.error("An unexpected exception occurred: ", exception);
         }

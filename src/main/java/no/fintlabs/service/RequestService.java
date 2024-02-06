@@ -3,13 +3,22 @@ package no.fintlabs.service;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.exception.exceptions.EntityNotFoundException;
+import no.fintlabs.exception.exceptions.ForbiddenAccessException;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import javax.annotation.Nullable;
 
+import java.io.IOException;
+
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +33,19 @@ public class RequestService {
                 .uri(uri)
                 .header(AUTHORIZATION, getAuthorizationValue(environment))
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, this::handle4xxClientError)
                 .toEntity(Object.class)
                 .getBody();
     }
+
+    private void handle4xxClientError(HttpRequest request, ClientHttpResponse response) throws IOException {
+        switch (response.getStatusCode()) {
+            case NOT_FOUND -> throw new EntityNotFoundException();
+            case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
+            default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
+        }
+    }
+
 
     @Nullable
     public Object getCommonResource(String uri, DataFetchingEnvironment environment) {
