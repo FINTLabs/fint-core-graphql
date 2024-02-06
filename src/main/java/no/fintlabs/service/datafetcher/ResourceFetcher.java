@@ -81,10 +81,6 @@ public class ResourceFetcher {
         return corePrincipal.getRoles().contains(String.format("FINT_Client_%s_%s", split[1], split[2]));
     }
 
-    private String getAuthorizationToken(DataFetchingEnvironment environment) {
-        return environment.getGraphQlContext().get(AUTHORIZATION);
-    }
-
     private String buildResourceUri(String endpoint, Map.Entry<String, Object> firstArgument) {
         return String.format("%s/%s/%s", endpoint, firstArgument.getKey(), firstArgument.getValue());
     }
