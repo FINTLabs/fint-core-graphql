@@ -11,18 +11,18 @@ public class ResourceAssembler {
 
     public Object mergeContent(List<Object> resources) {
         LinkedHashMap<String, Object> firstResource = castToLinkedHashMap(resources.getFirst());
-        LinkedHashMap<String, List<Map<String, String>>> consolidatedLinks = getLinks(firstResource);
+        LinkedHashMap<String, List<Map<String, String>>> fintLinks = getLinks(firstResource);
 
         resources.stream().skip(1)
                 .map(this::castToLinkedHashMap)
                 .map(this::getLinks)
                 .forEach(links -> links.forEach((key, value) ->
-                        consolidatedLinks.merge(key, value, (existingVal, newVal) -> {
+                        fintLinks.merge(key, value, (existingVal, newVal) -> {
                             existingVal.addAll(newVal);
                             return existingVal;
                         })));
 
-        firstResource.put("_links", consolidatedLinks);
+        firstResource.put("_links", fintLinks);
         return firstResource;
     }
 
