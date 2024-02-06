@@ -54,7 +54,6 @@ public class DataFetcherService {
 
             if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
                 return getCommonFintResource(environment, fintObject);
-                // TODO: CT-1158 Handle felles resources
             }
             return getFintResource(environment, fintObject);
         });
