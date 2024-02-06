@@ -9,7 +9,6 @@ import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.service.EndpointService;
 import no.fintlabs.service.RequestService;
 import no.fintlabs.service.ResourceAssembler;
-import no.fintlabs.service.datafetcher.ContextService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -53,7 +52,7 @@ public class ResourceFetcher {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        return resources.isEmpty() ? Collections.emptyList() : resourceAssembler.mergeContent(resources);
+        return resources.isEmpty() ? Collections.emptyList() : resourceAssembler.mergeLinks(resources);
     }
 
     public Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {

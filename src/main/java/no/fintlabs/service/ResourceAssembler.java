@@ -9,7 +9,7 @@ import java.util.Map;
 @Service
 public class ResourceAssembler {
 
-    public Object mergeContent(List<Object> resources) {
+    public Object mergeLinks(List<Object> resources) {
         LinkedHashMap<String, Object> firstResource = castToLinkedHashMap(resources.getFirst());
         LinkedHashMap<String, List<Map<String, String>>> fintLinks = getLinks(firstResource);
 
