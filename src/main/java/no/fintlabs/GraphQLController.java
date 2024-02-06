@@ -38,16 +38,16 @@ public class GraphQLController {
     private ExecutionInput getExecutionInput(String query, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
         return ExecutionInput.newExecutionInput()
                 .query(query)
-                .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal, query))
+                .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal))
                 .build();
     }
 
-    private Map<?, Object> getGraphQLContext(ServerWebExchange serverWebExchange, CorePrincipal corePrincipal, String query) {
+    private Map<?, Object> getGraphQLContext(ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
         return Map.of(
                 ServerWebExchange.class, serverWebExchange,
                 CorePrincipal.class, corePrincipal,
                 Date.class, new Date(),
-                "counter", 1
+                "counter", 0
         );
     }
 
