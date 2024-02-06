@@ -2,7 +2,7 @@ name: CD
 
 on:
   repository_dispatch:
-    types: [disabled]
+    types: [trigger-cd]
 
 env:
   REGISTRY: ghcr.io
