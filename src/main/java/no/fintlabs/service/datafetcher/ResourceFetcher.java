@@ -33,11 +33,9 @@ public class ResourceFetcher {
     private final RestClientConfig restClientConfig;
 
     public Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
-        CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
         return requestService.getResource(
                 buildResourceUri(environment, fintObject),
-                environment.getGraphQlContext().get(AUTHORIZATION),
-                corePrincipal.getUsername()
+                environment
         );
     }
 
@@ -48,7 +46,7 @@ public class ResourceFetcher {
         List<Object> resources = endpointService.getEndpoints(fintObject.getPackageName()).stream()
                 .filter(endpoint -> hasAccess(endpoint, corePrincipal))
                 .map(endpoint -> buildResourceUri(endpoint, firstArgument))
-                .map(uri -> requestService.getCommonResource(uri, getAuthorizationToken(environment), corePrincipal.getUsername()))
+                .map(uri -> requestService.getCommonResource(uri, environment))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
@@ -60,13 +58,9 @@ public class ResourceFetcher {
     }
 
     public List<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
-        CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
         return getRelationRequestUri(environment, fieldName).stream()
-                .map(link -> requestService.getResource(
-                        link,
-                        environment.getGraphQlContext().get(AUTHORIZATION),
-                        corePrincipal.getUsername())
-                ).toList();
+                .map(link -> requestService.getResource(link, environment))
+                .toList();
     }
 
     private List<String> getRelationRequestUri(DataFetchingEnvironment environment, String fieldName) {
