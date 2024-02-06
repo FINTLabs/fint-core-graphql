@@ -3,8 +3,10 @@ package no.fintlabs.service;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.exception.exceptions.CacheNotFoundException;
 import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.ForbiddenAccessException;
+import no.fintlabs.exception.exceptions.UnexpectedErrorException;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
@@ -13,12 +15,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import javax.annotation.Nullable;
-
 import java.io.IOException;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.*;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class RequestService {
                 .uri(uri)
                 .header(AUTHORIZATION, getAuthorizationValue(environment))
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, this::handle4xxClientError)
+                .onStatus(HttpStatusCode::isError, this::handle4xxClientError)
                 .toEntity(Object.class)
                 .getBody();
     }
@@ -42,8 +42,16 @@ public class RequestService {
         switch (response.getStatusCode()) {
             case NOT_FOUND -> throw new EntityNotFoundException();
             case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
+            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response);
             default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
         }
+    }
+
+    private void handle5xxClientError(ClientHttpResponse response) throws IOException {
+        if (response.getStatusText().contains("CacheNotFoundException")) {
+            throw new CacheNotFoundException();
+        }
+        throw new UnexpectedErrorException();
     }
 
 
