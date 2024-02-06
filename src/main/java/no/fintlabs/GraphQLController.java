@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 
+import java.util.Date;
 import java.util.Map;
 
 
@@ -37,14 +38,16 @@ public class GraphQLController {
     private ExecutionInput getExecutionInput(String query, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
         return ExecutionInput.newExecutionInput()
                 .query(query)
-                .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal))
+                .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal, query))
                 .build();
     }
 
-    private Map<?, Object> getGraphQLContext(ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
+    private Map<?, Object> getGraphQLContext(ServerWebExchange serverWebExchange, CorePrincipal corePrincipal, String query) {
         return Map.of(
                 ServerWebExchange.class, serverWebExchange,
-                CorePrincipal.class, corePrincipal
+                CorePrincipal.class, corePrincipal,
+                Date.class, new Date(),
+                "counter", 1
         );
     }
 
