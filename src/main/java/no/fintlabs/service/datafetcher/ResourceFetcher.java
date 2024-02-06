@@ -4,6 +4,7 @@ import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import no.fintlabs.config.RestClientConfig;
 import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
+import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.MissingLinkException;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.service.EndpointService;
@@ -11,13 +12,10 @@ import no.fintlabs.service.RequestService;
 import no.fintlabs.service.ResourceAssembler;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +48,11 @@ public class ResourceFetcher {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        return resources.isEmpty() ? Collections.emptyList() : resourceAssembler.mergeLinks(resources);
+        if (resources.isEmpty()) {
+            throw new EntityNotFoundException();
+        } else {
+            return resourceAssembler.mergeLinks(resources);
+        }
     }
 
     public Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
