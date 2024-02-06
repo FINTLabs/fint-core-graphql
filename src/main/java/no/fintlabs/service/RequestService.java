@@ -1,8 +1,8 @@
 package no.fintlabs.service;
 
+import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.config.RestClientConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
@@ -17,32 +17,39 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 public class RequestService {
 
     private final RestClient restClient;
-    private final RestClientConfig restclientConfig;
 
-    public Object getResource(String uri, String authorizationValue, String username) {
-        log.debug("{}: Requesting url: {}{}", username, restclientConfig.getBaseUrl(), uri);
+    public Object getResource(String uri, DataFetchingEnvironment environment) {
+        increaseCount(environment);
         return restClient.get()
                 .uri(uri)
-                .header(AUTHORIZATION, authorizationValue)
+                .header(AUTHORIZATION, getAuthorizationValue(environment))
                 .retrieve()
                 .toEntity(Object.class)
                 .getBody();
     }
 
     @Nullable
-    public Object getCommonResource(String uri, String authorizationValue, String username) {
+    public Object getCommonResource(String uri, DataFetchingEnvironment environment) {
+        increaseCount(environment);
         try {
-            log.debug("{}: Requesting url: {}{}", username, restclientConfig.getBaseUrl(), uri);
             return restClient.get()
                     .uri(uri)
-                    .header(AUTHORIZATION, authorizationValue)
+                    .header(AUTHORIZATION, getAuthorizationValue(environment))
                     .retrieve()
                     .toEntity(Object.class)
                     .getBody();
         } catch (HttpClientErrorException.NotFound e) {
-            log.debug("{}: 404 Not found", username);
             return null;
         }
+    }
+
+    private String getAuthorizationValue(DataFetchingEnvironment environment) {
+        return environment.getGraphQlContext().get(AUTHORIZATION);
+    }
+
+    private void increaseCount(DataFetchingEnvironment environment) {
+        Integer count = environment.getGraphQlContext().get("counter");
+        environment.getGraphQlContext().put("counter", count + 1);
     }
 
 }
