@@ -33,27 +33,10 @@ public class RequestService {
                 .uri(uri)
                 .header(AUTHORIZATION, getAuthorizationValue(environment))
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, this::handle4xxClientError)
+                .onStatus(HttpStatusCode::isError, this::handleError)
                 .toEntity(Object.class)
                 .getBody();
     }
-
-    private void handle4xxClientError(HttpRequest request, ClientHttpResponse response) throws IOException {
-        switch (response.getStatusCode()) {
-            case NOT_FOUND -> throw new EntityNotFoundException();
-            case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
-            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response);
-            default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
-        }
-    }
-
-    private void handle5xxClientError(ClientHttpResponse response) throws IOException {
-        if (response.getStatusText().contains("CacheNotFoundException")) {
-            throw new CacheNotFoundException();
-        }
-        throw new UnexpectedErrorException();
-    }
-
 
     @Nullable
     public Object getCommonResource(String uri, DataFetchingEnvironment environment) {
@@ -68,6 +51,22 @@ public class RequestService {
         } catch (HttpClientErrorException.NotFound e) {
             return null;
         }
+    }
+
+    private void handleError(HttpRequest request, ClientHttpResponse response) throws IOException {
+        switch (response.getStatusCode()) {
+            case NOT_FOUND -> throw new EntityNotFoundException();
+            case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
+            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response);
+            default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
+        }
+    }
+
+    private void handle5xxClientError(ClientHttpResponse response) throws IOException {
+        if (response.getStatusText().contains("CacheNotFoundException")) {
+            throw new CacheNotFoundException();
+        }
+        throw new UnexpectedErrorException();
     }
 
     private String getAuthorizationValue(DataFetchingEnvironment environment) {
