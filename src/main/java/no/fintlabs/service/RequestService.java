@@ -57,14 +57,14 @@ public class RequestService {
         switch (response.getStatusCode()) {
             case NOT_FOUND -> throw new EntityNotFoundException();
             case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
-            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response);
+            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response, request);
             default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
         }
     }
 
-    private void handle5xxClientError(ClientHttpResponse response) throws IOException {
+    private void handle5xxClientError(ClientHttpResponse response, HttpRequest httpRequest) throws IOException {
         if (response.getStatusText().contains("CacheNotFoundException")) {
-            throw new CacheNotFoundException();
+            throw new CacheNotFoundException(httpRequest.getURI().toASCIIString());
         }
         throw new UnexpectedErrorException();
     }
