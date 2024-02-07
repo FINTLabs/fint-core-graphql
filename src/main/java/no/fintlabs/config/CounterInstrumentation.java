@@ -22,10 +22,11 @@ public class CounterInstrumentation implements Instrumentation {
         if (parameters.getQuery() == null || !parameters.getQuery().contains("__schema")) {
             GraphQLContext graphQLContext = parameters.getGraphQLContext();
             CorePrincipal corePrincipal = graphQLContext.get(CorePrincipal.class);
-            log.info("User: {}, TimeInSeconds: {}, RestCalls: {}, \nQuery: {}",
+            log.info("User: {}, TimeInSeconds: {}, RestCalls: {}, Errors: {} \nQuery: {}",
                     corePrincipal.getUsername(),
                     calculateTimeTakenInSeconds(graphQLContext.get(Date.class)),
                     graphQLContext.get("counter"),
+                    executionResult.getErrors().size(),
                     filterQuery(parameters.getQuery()));
         }
         return CompletableFuture.completedFuture(executionResult);
