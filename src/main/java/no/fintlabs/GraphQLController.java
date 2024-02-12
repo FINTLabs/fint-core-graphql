@@ -32,14 +32,12 @@ public class GraphQLController {
     }
 
     private ExecutionResult getExecutionResult(Map<String, Object> request, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
-        return graphQL.execute(getExecutionInput(request.get("query").toString(), serverWebExchange, corePrincipal));
-    }
-
-    private ExecutionInput getExecutionInput(String query, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
-        return ExecutionInput.newExecutionInput()
-                .query(query)
-                .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal))
-                .build();
+        return graphQL.execute(
+                ExecutionInput.newExecutionInput()
+                        .query(request.get("query").toString())
+                        .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal))
+                        .build()
+        );
     }
 
     private Map<?, Object> getGraphQLContext(ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
