@@ -1,22 +1,28 @@
 package no.fintlabs.reflection;
 
 import no.fintlabs.exception.exceptions.FintObjectNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReflectionServiceTest {
 
+    private ReflectionService reflectionService;
+
+    @BeforeEach
+    void setUp() {
+        reflectionService = new ReflectionService();
+    }
+
     @Test
     void getFintObjectExists() {
-        ReflectionService service = new ReflectionService();
-        assertDoesNotThrow(() -> service.getFintObject("no.fint.model.utdanning.elev.Elev"));
+        assertDoesNotThrow(() -> reflectionService.getFintObject("no.fint.model.utdanning.elev.Elev"));
     }
 
     @Test
     void getFintObjectDoesNotExist() {
-        ReflectionService service = new ReflectionService();
-        Exception exception = assertThrows(RuntimeException.class, () -> service.getFintObject("NonExistentName"));
+        Exception exception = assertThrows(RuntimeException.class, () -> reflectionService.getFintObject("NonExistentName"));
         assertInstanceOf(FintObjectNotFoundException.class, exception);
     }
 
