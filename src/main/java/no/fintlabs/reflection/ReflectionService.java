@@ -2,6 +2,7 @@ package no.fintlabs.reflection;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import no.fintlabs.exception.exceptions.FintObjectNotFoundException;
 import no.fintlabs.reflection.model.FintObject;
 import org.reflections.Reflections;
 import org.springframework.context.annotation.Bean;
@@ -33,7 +34,7 @@ public class ReflectionService {
         if (fintObjects.containsKey(name)) {
             return fintObjects.get(name);
         } else {
-            throw new RuntimeException("Could not find FintObject with name " + name);
+            throw new FintObjectNotFoundException(name);
         }
     }
 
