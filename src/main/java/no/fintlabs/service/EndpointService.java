@@ -16,7 +16,6 @@ import java.util.Set;
 public class EndpointService {
 
     private final ReflectionService reflectionService;
-    private final Map<String, String> mainEndpoints = new HashMap<>();
     private final Map<String, Set<String>> commonEndpoints = new HashMap<>();
 
     public EndpointService(ReflectionService reflectionService, @Qualifier("fintObjects") Map<String, FintObject> fintObjects) {
