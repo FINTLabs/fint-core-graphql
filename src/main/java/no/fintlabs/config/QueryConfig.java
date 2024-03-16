@@ -53,7 +53,7 @@ public class QueryConfig {
 
     private GraphQLFieldDefinition buildFieldDefinition(FintObject fintObject) {
         return GraphQLFieldDefinition.newFieldDefinition()
-                .name(fintObject.getName())
+                .name(fintObject.getName().toLowerCase())
                 .arguments(buildArguments(fintObject))
                 .type(getOrCreateObjectType(fintObject))
                 .build();
