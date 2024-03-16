@@ -32,9 +32,11 @@ public class GraphQLController {
     }
 
     private ExecutionResult getExecutionResult(Map<String, Object> request, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
+        Map<String, Object> variables = (Map<String, Object>) request.getOrDefault("variables", Map.of());
         return graphQL.execute(
                 ExecutionInput.newExecutionInput()
                         .query(request.get("query").toString())
+                        .variables(variables)
                         .graphQLContext(getGraphQLContext(serverWebExchange, corePrincipal))
                         .build()
         );
