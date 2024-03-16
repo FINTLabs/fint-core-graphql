@@ -4,10 +4,10 @@ import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.service.ReferenceService;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
+import no.fintlabs.service.ReferenceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -107,7 +107,8 @@ public class QueryConfig {
         return switch (relation.multiplicity()) {
             case ONE_TO_ONE -> GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(relationFintObject.getName()));
             case ZERO_TO_MANY -> GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName()));
-            case ONE_TO_MANY -> GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
+            case ONE_TO_MANY ->
+                    GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
             default -> GraphQLTypeReference.typeRef(relationFintObject.getName());
         };
     }
@@ -121,27 +122,28 @@ public class QueryConfig {
     }
 
     private void addFields(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
-        fintObject.getFields().forEach(field -> {
-            GraphQLFieldDefinition.Builder fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
-                    .name(field.getName());
-
-            if (typeIsFromJava(field.getType())) {
-                objectTypeBuilder.field(fieldBuilder.type(determineGraphQLType(field.getType())).build());
-            } else {
-                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.getFintObject(field.getType().getName()))));
-            }
-        });
+        fintObject.getFields().forEach(field ->
+                objectTypeBuilder.field(
+                        GraphQLFieldDefinition.newFieldDefinition()
+                                .name(field.getName())
+                                .type(determineGraphQLType(field.getType()))
+                )
+        );
     }
 
-    private GraphQLScalarType determineGraphQLType(Class<?> fieldType) {
-        if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
-            return Scalars.GraphQLBoolean;
-        } else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType)) {
-            return Scalars.GraphQLFloat;
-        } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
-            return Scalars.GraphQLInt;
+    private GraphQLOutputType determineGraphQLType(Class<?> fieldType) {
+        if (typeIsFromJava(fieldType)) {
+            if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
+                return Scalars.GraphQLBoolean;
+            } else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType)) {
+                return Scalars.GraphQLFloat;
+            } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
+                return Scalars.GraphQLInt;
+            } else {
+                return Scalars.GraphQLString;
+            }
         } else {
-            return Scalars.GraphQLString;
+            return getOrCreateObjectType(reflectionService.getFintObject(fieldType.getName()));
         }
     }
 
