@@ -4,6 +4,7 @@ import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.FintMainObject;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -11,6 +12,9 @@ import no.fintlabs.service.ReferenceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,29 +130,49 @@ public class QueryConfig {
                 objectTypeBuilder.field(
                         GraphQLFieldDefinition.newFieldDefinition()
                                 .name(field.getName())
-                                .type(determineGraphQLType(field.getType()))
+                                .type(determineGraphQLType(field))
                 )
         );
     }
 
-    private GraphQLOutputType determineGraphQLType(Class<?> fieldType) {
-        if (typeIsFromJava(fieldType)) {
-            if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
-                return Scalars.GraphQLBoolean;
-            } else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType)) {
-                return Scalars.GraphQLFloat;
-            } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
-                return Scalars.GraphQLInt;
-            } else {
-                return Scalars.GraphQLString;
-            }
+    private GraphQLOutputType determineGraphQLType(Field field) {
+        Class<?> fieldType = field.getType();
+        if (List.class.isAssignableFrom(fieldType)) {
+            return determineGraphQLListType(field);
         } else {
-            return getOrCreateObjectType(reflectionService.getFintObject(fieldType.getName()));
+            return determineScalarGraphQLType(fieldType);
         }
     }
 
-    private boolean typeIsFromJava(Class<?> clazz) {
-        return clazz.getClassLoader() == null || clazz.getPackage().getName().startsWith("java") || clazz.getPackage().getName().startsWith("javax");
+    private GraphQLOutputType determineGraphQLListType(Field field) {
+        Type genericType = field.getGenericType();
+        if (genericType instanceof ParameterizedType parameterizedType) {
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            for (Type actualTypeArgument : actualTypeArguments) {
+                if (actualTypeArgument instanceof Class<?> fieldArgClass) {
+                    if (FintMainObject.class.isAssignableFrom(fieldArgClass)) {
+                        return GraphQLList.list(getOrCreateObjectType(reflectionService.getFintObject(fieldArgClass.getName())));
+                    } else {
+                        return GraphQLList.list(determineScalarGraphQLType(fieldArgClass));
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private GraphQLOutputType determineScalarGraphQLType(Class<?> clazz) {
+        if (no.fint.model.FintObject.class.isAssignableFrom(clazz)) {
+            return getOrCreateObjectType(reflectionService.getFintObject(clazz.getName()));
+        } else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
+            return Scalars.GraphQLBoolean;
+        } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz) || Double.class.isAssignableFrom(clazz) || double.class.isAssignableFrom(clazz)) {
+            return Scalars.GraphQLFloat;
+        } else if (Integer.class.isAssignableFrom(clazz) || int.class.isAssignableFrom(clazz) || Long.class.isAssignableFrom(clazz) || long.class.isAssignableFrom(clazz)) {
+            return Scalars.GraphQLInt;
+        } else {
+            return Scalars.GraphQLString;
+        }
     }
 
 }
