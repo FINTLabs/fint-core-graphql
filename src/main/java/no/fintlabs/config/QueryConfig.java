@@ -4,13 +4,17 @@ import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.service.ReferenceService;
+import no.fint.model.FintMainObject;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
+import no.fintlabs.service.ReferenceService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,7 +111,8 @@ public class QueryConfig {
         return switch (relation.multiplicity()) {
             case ONE_TO_ONE -> GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(relationFintObject.getName()));
             case ZERO_TO_MANY -> GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName()));
-            case ONE_TO_MANY -> GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
+            case ONE_TO_MANY ->
+                    GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
             default -> GraphQLTypeReference.typeRef(relationFintObject.getName());
         };
     }
@@ -121,32 +126,53 @@ public class QueryConfig {
     }
 
     private void addFields(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
-        fintObject.getFields().forEach(field -> {
-            GraphQLFieldDefinition.Builder fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
-                    .name(field.getName());
-
-            if (typeIsFromJava(field.getType())) {
-                objectTypeBuilder.field(fieldBuilder.type(determineGraphQLType(field.getType())).build());
-            } else {
-                objectTypeBuilder.field(fieldBuilder.type(getOrCreateObjectType(reflectionService.getFintObject(field.getType().getName()))));
-            }
-        });
+        fintObject.getFields().forEach(field ->
+                objectTypeBuilder.field(
+                        GraphQLFieldDefinition.newFieldDefinition()
+                                .name(field.getName())
+                                .type(determineGraphQLType(field))
+                )
+        );
     }
 
-    private GraphQLScalarType determineGraphQLType(Class<?> fieldType) {
-        if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
+    private GraphQLOutputType determineGraphQLType(Field field) {
+        Class<?> fieldType = field.getType();
+        if (List.class.isAssignableFrom(fieldType)) {
+            return determineGraphQLListType(field);
+        } else {
+            return determineScalarGraphQLType(fieldType);
+        }
+    }
+
+    private GraphQLOutputType determineGraphQLListType(Field field) {
+        Type genericType = field.getGenericType();
+        if (genericType instanceof ParameterizedType parameterizedType) {
+            Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+            for (Type actualTypeArgument : actualTypeArguments) {
+                if (actualTypeArgument instanceof Class<?> fieldArgClass) {
+                    if (FintMainObject.class.isAssignableFrom(fieldArgClass)) {
+                        return GraphQLList.list(getOrCreateObjectType(reflectionService.getFintObject(fieldArgClass.getName())));
+                    } else {
+                        return GraphQLList.list(determineScalarGraphQLType(fieldArgClass));
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private GraphQLOutputType determineScalarGraphQLType(Class<?> clazz) {
+        if (no.fint.model.FintObject.class.isAssignableFrom(clazz)) {
+            return getOrCreateObjectType(reflectionService.getFintObject(clazz.getName()));
+        } else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
             return Scalars.GraphQLBoolean;
-        } else if (Float.class.isAssignableFrom(fieldType) || float.class.isAssignableFrom(fieldType)) {
+        } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz) || Double.class.isAssignableFrom(clazz) || double.class.isAssignableFrom(clazz)) {
             return Scalars.GraphQLFloat;
-        } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
+        } else if (Integer.class.isAssignableFrom(clazz) || int.class.isAssignableFrom(clazz) || Long.class.isAssignableFrom(clazz) || long.class.isAssignableFrom(clazz)) {
             return Scalars.GraphQLInt;
         } else {
             return Scalars.GraphQLString;
         }
-    }
-
-    private boolean typeIsFromJava(Class<?> clazz) {
-        return clazz.getClassLoader() == null || clazz.getPackage().getName().startsWith("java") || clazz.getPackage().getName().startsWith("javax");
     }
 
 }
