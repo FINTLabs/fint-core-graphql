@@ -5,6 +5,7 @@ import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.FintMainObject;
+import no.fint.model.utdanning.kodeverk.Grepreferanse;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -99,7 +100,7 @@ public class QueryConfig {
     private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
         fintObject.getRelations().forEach(relation -> {
             FintObject relationFintObject = reflectionService.getFintObject(relation.packageName());
-            if (!relationIsEmpty(relation) && !relationFintObject.isAbstract())
+            if (!relationFintObject.isAbstract() && !relationFintObject.isReference())
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
                         .type(getRelationType(relation, relationFintObject))
@@ -115,14 +116,6 @@ public class QueryConfig {
                     GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
             default -> GraphQLTypeReference.typeRef(relationFintObject.getName());
         };
-    }
-
-    private boolean relationIsEmpty(FintRelation relation) {
-        FintObject fintObject = reflectionService.getFintObject(relation.packageName());
-        if (fintObject.getFields().isEmpty()) {
-            return fintObject.getRelations().isEmpty();
-        }
-        return false;
     }
 
     private void addFields(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {

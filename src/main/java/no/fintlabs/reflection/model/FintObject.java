@@ -2,6 +2,7 @@ package no.fintlabs.reflection.model;
 
 import lombok.Data;
 import no.fint.model.FintMainObject;
+import no.fint.model.FintReference;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 
 import java.lang.reflect.Field;
@@ -16,6 +17,7 @@ public class FintObject {
     private final boolean isMainObject;
     private final boolean isAbstract;
     private final boolean isCommon;
+    private final boolean isReference;
     private final String name;
     private final String simpleName;
     private final String packageName;
@@ -38,6 +40,7 @@ public class FintObject {
         isMainObject = setIsMainObject(clazz);
         identificatorFields = setIdentificatorFields();
         isAbstract = Modifier.isAbstract(clazz.getModifiers());
+        isReference = FintReference.class.isAssignableFrom(clazz);
         simpleName = clazz.getSimpleName().toLowerCase();
     }
 
