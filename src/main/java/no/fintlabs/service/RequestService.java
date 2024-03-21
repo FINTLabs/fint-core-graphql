@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 import javax.annotation.Nullable;
@@ -48,8 +49,11 @@ public class RequestService {
                     .retrieve()
                     .toEntity(Object.class)
                     .getBody();
-        } catch (HttpClientErrorException exception) {
+        } catch (HttpClientErrorException clientErrorException) {
             return null;
+        } catch (HttpServerErrorException serverErrorException) {
+            log.error("Server error when accessing resource: " + uri, serverErrorException);
+            throw new RuntimeException("Server error when accessing resource: " + uri, serverErrorException);
         }
     }
 
