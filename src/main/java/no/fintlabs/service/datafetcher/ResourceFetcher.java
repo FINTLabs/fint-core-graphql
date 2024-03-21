@@ -61,7 +61,8 @@ public class ResourceFetcher {
 
     public List<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
         return getRelationRequestUri(environment, fieldName).stream()
-                .map(link -> requestService.getResource(link, environment))
+                .map(link -> requestService.getRelationResource(link, environment))
+                .filter(Objects::nonNull)
                 .toList();
     }
 
