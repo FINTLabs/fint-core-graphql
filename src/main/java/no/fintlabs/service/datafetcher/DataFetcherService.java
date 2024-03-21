@@ -21,16 +21,16 @@ public class DataFetcherService {
                                    GraphQLObjectType parentType,
                                    GraphQLFieldDefinition fieldDefinition) {
         FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
-        createDataFetcher(builder, parentType, fieldDefinition, fintObject);
+        createRelationDataFetcher(builder, parentType, fieldDefinition, fintObject);
         fintObject.getRelations().forEach(fintRelation -> {
             createRelationDataFetcher(builder, fieldDefinition.getType(), fintRelation);
         });
     }
 
-    private void createDataFetcher(GraphQLCodeRegistry.Builder builder,
-                                   GraphQLObjectType parentType,
-                                   GraphQLFieldDefinition fieldDefinition,
-                                   FintObject fintObject) {
+    private void createRelationDataFetcher(GraphQLCodeRegistry.Builder builder,
+                                           GraphQLObjectType parentType,
+                                           GraphQLFieldDefinition fieldDefinition,
+                                           FintObject fintObject) {
         builder.dataFetcher(parentType, fieldDefinition, environment -> {
             contextService.checkIfUserIsBlocked(environment);
             contextService.setAuthorizationValueToContext(environment);
@@ -48,11 +48,11 @@ public class DataFetcherService {
         builder.dataFetcher(FieldCoordinates.coordinates(
                         (GraphQLObjectType) parentType,
                         fintRelation.relationName().toLowerCase()),
-                createDataFetcher(fintRelation)
+                createRelationDataFetcher(fintRelation)
         );
     }
 
-    private DataFetcher<?> createDataFetcher(FintRelation fintRelation) {
+    private DataFetcher<?> createRelationDataFetcher(FintRelation fintRelation) {
         String fieldName = fintRelation.relationName().toLowerCase();
 
         return environment -> switch (fintRelation.multiplicity()) {
