@@ -25,17 +25,11 @@ public class FintDataFetcherExceptionHandler implements DataFetcherExceptionHand
 
         logException(exception);
 
-        return CompletableFuture.completedFuture(exceptionHandlerResult(
-                exception,
-                handlerParameters.getSourceLocation(),
-                handlerParameters.getPath())
+        return CompletableFuture.completedFuture(
+                DataFetcherExceptionHandlerResult.newResult(
+                        getError(exception, handlerParameters.getSourceLocation(), handlerParameters.getPath())
+                ).build()
         );
-    }
-
-    private DataFetcherExceptionHandlerResult exceptionHandlerResult(Throwable exception,
-                                                                     SourceLocation sourceLocation,
-                                                                     ResultPath resultPath) {
-        return DataFetcherExceptionHandlerResult.newResult(getError(exception, sourceLocation, resultPath)).build();
     }
 
     private GraphQLError getError(Throwable exception, SourceLocation sourceLocation, ResultPath resultPath) {
