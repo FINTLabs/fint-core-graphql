@@ -5,7 +5,6 @@ import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.FintMainObject;
-import no.fint.model.utdanning.kodeverk.Grepreferanse;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
@@ -100,7 +99,7 @@ public class QueryConfig {
     private void addRelations(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
         fintObject.getRelations().forEach(relation -> {
             FintObject relationFintObject = reflectionService.getFintObject(relation.packageName());
-            if (!relationFintObject.isAbstract() && !relationFintObject.isReference())
+            if (!relationFintObject.isAbstract())
                 objectTypeBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
                         .name(relation.relationName().toLowerCase())
                         .type(getRelationType(relation, relationFintObject))
@@ -109,13 +108,22 @@ public class QueryConfig {
     }
 
     private GraphQLOutputType getRelationType(FintRelation relation, FintObject relationFintObject) {
+        GraphQLOutputType graphQLOutputType = determineGraphQLOutputType(relationFintObject);
         return switch (relation.multiplicity()) {
-            case ONE_TO_ONE -> GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(relationFintObject.getName()));
-            case ZERO_TO_MANY -> GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName()));
+            case ONE_TO_ONE -> GraphQLNonNull.nonNull(graphQLOutputType);
+            case ZERO_TO_MANY -> GraphQLList.list(graphQLOutputType);
             case ONE_TO_MANY ->
-                    GraphQLNonNull.nonNull(GraphQLList.list(GraphQLTypeReference.typeRef(relationFintObject.getName())));
-            default -> GraphQLTypeReference.typeRef(relationFintObject.getName());
+                    GraphQLNonNull.nonNull(GraphQLList.list(graphQLOutputType));
+            default -> graphQLOutputType;
         };
+    }
+
+    private GraphQLOutputType determineGraphQLOutputType(FintObject relationFintObject) {
+        if (relationFintObject.isReference()) {
+            return Scalars.GraphQLString;
+        } else {
+            return GraphQLTypeReference.typeRef(relationFintObject.getName());
+        }
     }
 
     private void addFields(FintObject fintObject, GraphQLObjectType.Builder objectTypeBuilder) {
