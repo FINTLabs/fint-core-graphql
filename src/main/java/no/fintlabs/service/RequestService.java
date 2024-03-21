@@ -15,6 +15,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import javax.annotation.Nullable;
+import javax.management.relation.RelationException;
 import java.io.IOException;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -36,6 +37,20 @@ public class RequestService {
                 .onStatus(HttpStatusCode::isError, this::handleError)
                 .toEntity(Object.class)
                 .getBody();
+    }
+
+    public Object getRelationResource(String uri, DataFetchingEnvironment environment) {
+        increaseCount(environment);
+        try {
+            return restClient.get()
+                    .uri(uri)
+                    .header(AUTHORIZATION, getAuthorizationValue(environment))
+                    .retrieve()
+                    .toEntity(Object.class)
+                    .getBody();
+        } catch (HttpClientErrorException exception) {
+            return null;
+        }
     }
 
     @Nullable
