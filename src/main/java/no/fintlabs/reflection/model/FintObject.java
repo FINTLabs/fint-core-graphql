@@ -77,22 +77,23 @@ public class FintObject {
     // TODO: CT-1136: Add interface for relations
     private List<FintRelation> getAllRelations(Class<?> clazz) {
         List<FintRelation> relations = new ArrayList<>();
-        Class<?>[] declaredClasses = clazz.getDeclaredClasses();
+        for (Class<?> currentClass = clazz; currentClass != null; currentClass = currentClass.getSuperclass()) {
+            Class<?>[] declaredClasses = currentClass.getDeclaredClasses();
+            for (Class<?> innerClass : declaredClasses) {
+                if (innerClass.isEnum()) {
+                    Object[] enumConstants = innerClass.getEnumConstants();
+                    for (Object enumConstant : enumConstants) {
+                        try {
+                            Method getTypeNameMethod = innerClass.getMethod("getTypeName");
+                            Method getMultiplicityMethod = innerClass.getMethod("getMultiplicity");
 
-        for (Class<?> innerClass : declaredClasses) {
-            if (innerClass.isEnum()) {
-                Object[] enumConstants = innerClass.getEnumConstants();
-                for (Object enumConstant : enumConstants) {
-                    try {
-                        Method getTypeNameMethod = innerClass.getMethod("getTypeName");
-                        Method getMultiplicityMethod = innerClass.getMethod("getMultiplicity");
-
-                        String typeName = (String) getTypeNameMethod.invoke(enumConstant);
-                        String multiplicityLabel = (String) getMultiplicityMethod.invoke(enumConstant);
-                        Multiplicity multiplicity = Multiplicity.fromLabel(multiplicityLabel);
-                        relations.add(new FintRelation(enumConstant.toString(), typeName, multiplicity));
-                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
+                            String typeName = (String) getTypeNameMethod.invoke(enumConstant);
+                            String multiplicityLabel = (String) getMultiplicityMethod.invoke(enumConstant);
+                            Multiplicity multiplicity = Multiplicity.fromLabel(multiplicityLabel);
+                            relations.add(new FintRelation(enumConstant.toString(), typeName, multiplicity));
+                        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
