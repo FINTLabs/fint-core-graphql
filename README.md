@@ -14,7 +14,7 @@ using their Identifikator argument.
 
 ```graphql
 query getElevGjest {
-  Elev(elevnummer: "123") {
+  elev(elevnummer: "123") {
     gjest
   }
 }
@@ -24,7 +24,7 @@ Even though you can only specify one element at the first query, doesn't mean yo
 
 ```graphql
 query getSkoler {
-  Skole(systemId: "1579") {
+  skole(systemId: "1579") {
     basisgruppe {
       navn
     }
