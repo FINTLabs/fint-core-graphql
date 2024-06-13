@@ -28,13 +28,14 @@ public class CounterInstrumentation implements Instrumentation {
             GraphQLContext graphQLContext = parameters.getGraphQLContext();
             CorePrincipal corePrincipal = graphQLContext.get(CorePrincipal.class);
 
-            log.info("User: {}, TimeInSeconds: {}, RestCalls: {}, ErrorCount: {} \nQuery: {} \nErrors: {}",
+            log.info("User: {}, TimeInSeconds: {}, RestCalls: {}, ErrorCount: {} \nQuery: \n{} \nErrors: {} \nVariables: {}",
                     corePrincipal.getUsername(),
                     calculateTimeTakenInSeconds(graphQLContext.get(Date.class)),
                     graphQLContext.get("counter"),
                     executionResult.getErrors().size(),
                     filterQuery(parameters.getQuery()),
-                    countErrorTypes(executionResult.getErrors()));
+                    countErrorTypes(executionResult.getErrors()),
+                    parameters.getVariables());
         }
         return CompletableFuture.completedFuture(executionResult);
     }
