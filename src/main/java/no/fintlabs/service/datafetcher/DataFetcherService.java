@@ -18,25 +18,25 @@ public class DataFetcherService {
     private final ResourceFetcher resourceFetcher;
 
     public void attachDataFetchers(GraphQLCodeRegistry.Builder builder,
-                                   GraphQLObjectType parentType,
+                                   GraphQLObjectType querySchema,
                                    GraphQLFieldDefinition fieldDefinition) {
         FintObject fintObject = referenceService.getFintObject(fieldDefinition.getType().hashCode());
-        createRelationDataFetcher(builder, parentType, fieldDefinition, fintObject);
-        fintObject.getRelations().forEach(fintRelation -> {
-            createRelationDataFetcher(builder, fieldDefinition.getType(), fintRelation);
-        });
+        createFintResourceDataFetcher(builder, querySchema, fieldDefinition, fintObject);
+        fintObject.getRelations().forEach(fintRelation ->
+                createRelationDataFetcher(builder, fieldDefinition.getType(), fintRelation)
+        );
     }
 
-    private void createRelationDataFetcher(GraphQLCodeRegistry.Builder builder,
-                                           GraphQLObjectType parentType,
-                                           GraphQLFieldDefinition fieldDefinition,
-                                           FintObject fintObject) {
-        builder.dataFetcher(parentType, fieldDefinition, environment -> {
+    private void createFintResourceDataFetcher(GraphQLCodeRegistry.Builder builder,
+                                               GraphQLObjectType querySchema,
+                                               GraphQLFieldDefinition fieldDefinition,
+                                               FintObject fintObject) {
+        builder.dataFetcher(querySchema, fieldDefinition, environment -> {
             contextService.checkIfUserIsBlocked(environment);
             contextService.setAuthorizationValueToContext(environment);
 
-            if (fintObject.getDomainName().equalsIgnoreCase("felles")) {
-                return resourceFetcher.getCommonFintResource(environment, fintObject);
+            if (fintObject.getDomainName().equalsIgnoreCase("felles")) { // Asks multiple consumers for the same resource
+                return resourceFetcher.getCommonFintResources(environment, fintObject).toFuture();
             }
             return resourceFetcher.getFintResource(environment, fintObject);
         });
@@ -48,16 +48,18 @@ public class DataFetcherService {
         builder.dataFetcher(FieldCoordinates.coordinates(
                         (GraphQLObjectType) parentType,
                         fintRelation.relationName().toLowerCase()),
-                createRelationDataFetcher(fintRelation)
+                determineFetchingStyle(fintRelation)
         );
     }
 
-    private DataFetcher<?> createRelationDataFetcher(FintRelation fintRelation) {
+    private DataFetcher<?> determineFetchingStyle(FintRelation fintRelation) {
         String fieldName = fintRelation.relationName().toLowerCase();
 
         return environment -> switch (fintRelation.multiplicity()) {
-            case ONE_TO_MANY, ZERO_TO_MANY -> resourceFetcher.getFintRelationResources(environment, fieldName);
-            default -> resourceFetcher.getFintRelationResource(environment, fieldName);
+            case ONE_TO_MANY, ZERO_TO_MANY -> resourceFetcher.getFintRelationResources(environment, fieldName)
+                    .collectList()
+                    .toFuture();
+            default -> resourceFetcher.getFintRelationResource(environment, fieldName).toFuture();
         };
     }
 

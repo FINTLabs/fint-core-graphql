@@ -1,6 +1,7 @@
 package no.fintlabs.service;
 
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -9,7 +10,7 @@ import java.util.Map;
 @Service
 public class ResourceAssembler {
 
-    public Object mergeLinks(List<Object> resources) {
+    public Mono<Object> mergeLinks(List<Object> resources) {
         LinkedHashMap<String, Object> firstResource = castToLinkedHashMap(resources.getFirst());
         LinkedHashMap<String, List<Map<String, String>>> fintLinks = getLinks(firstResource);
 
@@ -23,7 +24,7 @@ public class ResourceAssembler {
                         })));
 
         firstResource.put("_links", fintLinks);
-        return firstResource;
+        return Mono.just(firstResource);
     }
 
     @SuppressWarnings("unchecked")

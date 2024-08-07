@@ -5,7 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.config.RestClientConfig;
+import no.fintlabs.config.WebClientConfig;
 import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.MissingLinkException;
@@ -14,12 +14,15 @@ import no.fintlabs.service.EndpointService;
 import no.fintlabs.service.RequestService;
 import no.fintlabs.service.ResourceAssembler;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -33,45 +36,51 @@ public class ResourceFetcher {
     private final EndpointService endpointService;
     private final RequestService requestService;
     private final ResourceAssembler resourceAssembler;
-    private final RestClientConfig restClientConfig;
+    private final WebClientConfig webClientConfig;
     private final Cache<String, Object> errorCache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
 
-    public Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+    public CompletableFuture<Object> getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
         return requestService.getResource(
                 buildResourceUri(environment, fintObject),
                 environment
         );
     }
 
-    public Object getCommonFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+    public Mono<Object> getCommonFintResources(DataFetchingEnvironment environment, FintObject fintObject) {
         CorePrincipal corePrincipal = environment.getGraphQlContext().get(CorePrincipal.class);
         Map.Entry<String, Object> firstArgument = contextService.getFirstArgument(environment);
 
-        List<Object> resources = endpointService.getEndpoints(fintObject.getPackageName()).stream()
+        Stream<Mono<Object>> monoStream = endpointService.getEndpoints(fintObject.getPackageName()).stream()
                 .filter(endpoint -> hasAccess(endpoint, corePrincipal))
                 .map(endpoint -> buildResourceUri(endpoint, firstArgument))
-                .map(uri -> requestService.getCommonResource(uri, environment))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .map(uri -> requestService.getCommonResource(uri, environment));
 
-        if (resources.isEmpty()) {
-            throw new EntityNotFoundException();
-        } else {
-            return resourceAssembler.mergeLinks(resources);
-        }
+        Flux<Object> resourceFlux = Flux.fromStream(monoStream)
+                .flatMap(mono -> mono.onErrorResume(e -> Mono.empty()))
+                .filter(Objects::nonNull);
+
+        return resourceFlux.collectList()
+                .flatMap(resources -> {
+                    if (resources.isEmpty()) {
+                        return Mono.error(new EntityNotFoundException());
+                    } else {
+                        return resourceAssembler.mergeLinks(resources);
+                    }
+                });
     }
 
-    public Object getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
-        return getFintRelationResources(environment, fieldName).getFirst();
+
+    public Mono<Object> getFintRelationResource(DataFetchingEnvironment environment, String fieldName) {
+        return getFintRelationResources(environment, fieldName).next();
     }
 
-    public List<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
-        return getRelationRequestUri(environment, fieldName).stream()
-                .map(link -> requestService.getRelationResource(link, environment))
-                .filter(Objects::nonNull)
-                .toList();
+    public Flux<Object> getFintRelationResources(DataFetchingEnvironment environment, String fieldName) {
+        return Flux.fromIterable(getRelationRequestUri(environment, fieldName))
+                .flatMap(link -> requestService.getRelationResource(link, environment)
+                        .onErrorResume(e -> Mono.empty()))
+                .filter(Objects::nonNull);
     }
 
     private List<String> getRelationRequestUri(DataFetchingEnvironment environment, String fieldName) {
@@ -87,7 +96,7 @@ public class ResourceFetcher {
         }
 
         return linksMap.get(fieldName).stream()
-                .map(map -> map.get(HREF).replace(restClientConfig.getBaseUrl(), ""))
+                .map(map -> map.get(HREF).replace(webClientConfig.getBaseUrl(), ""))
                 .toList();
     }
 
