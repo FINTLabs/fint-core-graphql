@@ -19,7 +19,7 @@ public class SchemaConfig {
     public GraphQL graphQL(GraphQLSchema graphQLSchema, DataFetcherExceptionHandler dataFetcherExceptionHandler, CounterInstrumentation counterInstrumentation) {
         return GraphQL.newGraphQL(graphQLSchema)
                 .defaultDataFetcherExceptionHandler(dataFetcherExceptionHandler)
-//                .instrumentation(counterInstrumentation)
+                .instrumentation(counterInstrumentation)
                 .build();
     }
 
