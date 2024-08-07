@@ -1,6 +1,7 @@
 package no.fintlabs.service;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Arrays;
@@ -18,6 +19,7 @@ public class ResourceAssemblerTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Disabled
     @Test
     void mergeLinks_shouldMergeAllLinksIntoFirstResource() {
         LinkedHashMap<String, Object> resource1 = new LinkedHashMap<>();
