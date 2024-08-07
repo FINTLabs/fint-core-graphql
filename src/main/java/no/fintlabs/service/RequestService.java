@@ -8,11 +8,14 @@ import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.ForbiddenAccessException;
 import no.fintlabs.exception.exceptions.UnexpectedErrorException;
 import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -34,19 +37,19 @@ public class RequestService {
                 .uri(uri)
                 .header(AUTHORIZATION, getAuthorizationValue(environment))
                 .retrieve()
-//                .onStatus(HttpStatusCode::isError, this::handleError)
+                .onStatus(HttpStatusCode::isError, this::handleError)
                 .bodyToMono(Object.class)
                 .toFuture();
     }
 
-    public Object getRelationResource(String uri, DataFetchingEnvironment environment) {
+    public Mono<Object> getRelationResource(String uri, DataFetchingEnvironment environment) {
         increaseCount(environment);
         try {
             return webClient.get()
                     .uri(uri)
                     .header(AUTHORIZATION, getAuthorizationValue(environment))
                     .retrieve()
-                    .toEntity(Object.class);
+                    .bodyToMono(Object.class);
         } catch (HttpClientErrorException clientErrorException) {
             return null;
         } catch (HttpServerErrorException serverErrorException) {
@@ -56,33 +59,37 @@ public class RequestService {
     }
 
     @Nullable
-    public Object getCommonResource(String uri, DataFetchingEnvironment environment) {
+    public Mono<Object> getCommonResource(String uri, DataFetchingEnvironment environment) {
         increaseCount(environment);
+        log.info("Doing request to: {}", uri);
         try {
             return webClient.get()
                     .uri(uri)
                     .header(AUTHORIZATION, getAuthorizationValue(environment))
                     .retrieve()
-                    .toEntity(Object.class);
+                    .bodyToMono(Object.class);
         } catch (HttpClientErrorException.NotFound e) {
             return null;
         }
     }
 
-    private void handleError(HttpRequest request, ClientHttpResponse response) throws IOException {
-        switch (response.getStatusCode()) {
-            case NOT_FOUND -> throw new EntityNotFoundException();
-            case FORBIDDEN -> throw new ForbiddenAccessException(request.getURI().toASCIIString());
-            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response, request);
-            default -> throw new IllegalStateException("Unexpected value: " + response.getStatusCode());
-        }
+    private Mono<? extends Throwable> handleError(ClientResponse response) {
+        return response.statusCode().isError() ? switch (response.statusCode()) {
+            case NOT_FOUND -> Mono.error(new EntityNotFoundException());
+            case FORBIDDEN -> Mono.error(new ForbiddenAccessException(response.request().getURI().toASCIIString()));
+            case INTERNAL_SERVER_ERROR -> handle5xxClientError(response);
+            default -> Mono.error(new IllegalStateException("Unexpected value: " + response.statusCode()));
+        } : Mono.empty();
     }
 
-    private void handle5xxClientError(ClientHttpResponse response, HttpRequest httpRequest) throws IOException {
-        if (response.getStatusText().contains("CacheNotFoundException")) {
-            throw new CacheNotFoundException(httpRequest.getURI().toASCIIString());
-        }
-        throw new UnexpectedErrorException();
+    private Mono<? extends Throwable> handle5xxClientError(ClientResponse response) {
+        return response.bodyToMono(String.class)
+                .flatMap(body -> {
+                    if (body.contains("CacheNotFoundException")) {
+                        return Mono.error(new CacheNotFoundException(response.request().getURI().toASCIIString()));
+                    }
+                    return Mono.error(new UnexpectedErrorException());
+                });
     }
 
     private String getAuthorizationValue(DataFetchingEnvironment environment) {
