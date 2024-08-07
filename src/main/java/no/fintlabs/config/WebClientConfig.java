@@ -17,6 +17,7 @@ public class WebClientConfig {
     public WebClient restClient() {
         return WebClient.builder()
                 .baseUrl(baseUrl)
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(Integer.MAX_VALUE))
                 .build();
     }
 
