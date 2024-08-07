@@ -15,6 +15,7 @@ import org.springframework.web.server.ServerWebExchange;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 
 @RestController
@@ -25,15 +26,15 @@ public class GraphQLController {
     private final GraphQL graphQL;
 
     @PostMapping
-    public ResponseEntity<Object> executeOperation(@AuthenticationPrincipal CorePrincipal corePrincipal,
-                                                   @RequestBody Map<String, Object> request,
-                                                   ServerWebExchange serverWebExchange) {
-        return ResponseEntity.ok().body(getExecutionResult(request, serverWebExchange, corePrincipal).toSpecification());
+    public ResponseEntity<CompletableFuture<ExecutionResult>> executeOperation(@AuthenticationPrincipal CorePrincipal corePrincipal,
+                                                                               @RequestBody Map<String, Object> request,
+                                                                               ServerWebExchange serverWebExchange) {
+        return ResponseEntity.ok().body(getExecutionResult(request, serverWebExchange, corePrincipal));
     }
 
-    private ExecutionResult getExecutionResult(Map<String, Object> request, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
+    private CompletableFuture<ExecutionResult> getExecutionResult(Map<String, Object> request, ServerWebExchange serverWebExchange, CorePrincipal corePrincipal) {
         Map<String, Object> variables = (Map<String, Object>) request.getOrDefault("variables", Map.of());
-        return graphQL.execute(
+        return graphQL.executeAsync(
                 ExecutionInput.newExecutionInput()
                         .query(request.get("query").toString())
                         .variables(variables)
