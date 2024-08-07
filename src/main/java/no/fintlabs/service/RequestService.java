@@ -7,9 +7,7 @@ import no.fintlabs.exception.exceptions.CacheNotFoundException;
 import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.ForbiddenAccessException;
 import no.fintlabs.exception.exceptions.UnexpectedErrorException;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -18,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
-import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
