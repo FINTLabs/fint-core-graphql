@@ -5,7 +5,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import graphql.schema.DataFetchingEnvironment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.config.RestClientConfig;
+import no.fintlabs.config.WebClientConfig;
 import no.fintlabs.core.resource.server.security.authentication.CorePrincipal;
 import no.fintlabs.exception.exceptions.EntityNotFoundException;
 import no.fintlabs.exception.exceptions.MissingLinkException;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -33,12 +34,12 @@ public class ResourceFetcher {
     private final EndpointService endpointService;
     private final RequestService requestService;
     private final ResourceAssembler resourceAssembler;
-    private final RestClientConfig restClientConfig;
+    private final WebClientConfig webClientConfig;
     private final Cache<String, Object> errorCache = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.HOURS)
             .build();
 
-    public Object getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
+    public CompletableFuture<Object> getFintResource(DataFetchingEnvironment environment, FintObject fintObject) {
         return requestService.getResource(
                 buildResourceUri(environment, fintObject),
                 environment
@@ -87,7 +88,7 @@ public class ResourceFetcher {
         }
 
         return linksMap.get(fieldName).stream()
-                .map(map -> map.get(HREF).replace(restClientConfig.getBaseUrl(), ""))
+                .map(map -> map.get(HREF).replace(webClientConfig.getBaseUrl(), ""))
                 .toList();
     }
 
