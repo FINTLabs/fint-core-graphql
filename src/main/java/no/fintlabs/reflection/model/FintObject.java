@@ -2,6 +2,7 @@ package no.fintlabs.reflection.model;
 
 import lombok.Data;
 import no.fint.model.FintMainObject;
+import no.fint.model.FintMultiplicity;
 import no.fint.model.FintReference;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 
@@ -84,12 +85,12 @@ public class FintObject {
                     Object[] enumConstants = innerClass.getEnumConstants();
                     for (Object enumConstant : enumConstants) {
                         try {
-                            Method getTypeNameMethod = innerClass.getMethod("getTypeName");
+                            Method getTypeNameMethod = innerClass.getMethod("getPackageName");
                             Method getMultiplicityMethod = innerClass.getMethod("getMultiplicity");
 
                             String typeName = (String) getTypeNameMethod.invoke(enumConstant);
-                            String multiplicityLabel = (String) getMultiplicityMethod.invoke(enumConstant);
-                            Multiplicity multiplicity = Multiplicity.fromLabel(multiplicityLabel);
+                            FintMultiplicity multiplicityLabel = (FintMultiplicity) getMultiplicityMethod.invoke(enumConstant);
+                            Multiplicity multiplicity = Multiplicity.fromLabel(multiplicityLabel.name());
                             relations.add(new FintRelation(enumConstant.toString(), typeName, multiplicity));
                         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
