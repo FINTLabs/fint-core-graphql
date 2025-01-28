@@ -1,10 +1,10 @@
 package no.fintlabs.reflection.model;
 
 public enum Multiplicity {
-    ONE_TO_ONE("1"),
-    ZERO_TO_MANY("0..*"),
-    ONE_TO_MANY("1..*"),
-    ZERO_TO_ONE("0..1");
+    ONE_TO_ONE("ONE_TO_ONE"),
+    ZERO_TO_MANY("NONE_TO_MANY"),
+    ONE_TO_MANY("ONE_TO_MANY"),
+    ZERO_TO_ONE("NONE_TO_ONE");
 
 
     private final String label;
