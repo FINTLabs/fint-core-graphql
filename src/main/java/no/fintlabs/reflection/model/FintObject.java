@@ -48,7 +48,7 @@ public class FintObject {
 
     private String setComponentUri(Class<?> clazz) {
         String[] parts = clazz.getName().split("\\.");
-        return "/" + String.join("/", Arrays.copyOfRange(parts, 3, 5));
+        return "/" + String.join("/", Arrays.copyOfRange(parts, 4, 6));
     }
 
     private String setResourceUrl(Class<?> clazz) {
