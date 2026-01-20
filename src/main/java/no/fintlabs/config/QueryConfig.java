@@ -4,11 +4,11 @@ import graphql.Scalars;
 import graphql.schema.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.FintMainObject;
 import no.fintlabs.reflection.ReflectionService;
 import no.fintlabs.reflection.model.FintObject;
 import no.fintlabs.reflection.model.FintRelation;
 import no.fintlabs.service.ReferenceService;
+import no.novari.fint.model.FintMainObject;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -163,7 +163,7 @@ public class QueryConfig {
     }
 
     private GraphQLOutputType determineScalarGraphQLType(Class<?> clazz) {
-        if (no.fint.model.FintObject.class.isAssignableFrom(clazz)) {
+        if (no.novari.fint.model.FintObject.class.isAssignableFrom(clazz)) {
             return getOrCreateObjectType(reflectionService.getFintObject(clazz.getName()));
         } else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
             return Scalars.GraphQLBoolean;

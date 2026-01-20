@@ -39,20 +39,20 @@ public class ReflectionService {
     }
 
     private Map<String, FintObject> createFintObjects() {
-        Set<Class<? extends no.fint.model.FintObject>> subTypesOf = new Reflections("no.fint.model")
-                .getSubTypesOf(no.fint.model.FintObject.class);
+        Set<Class<? extends no.novari.fint.model.FintObject>> subTypesOf = new Reflections("no.fint.model")
+                .getSubTypesOf(no.novari.fint.model.FintObject.class);
         gatherNameCounts(subTypesOf);
         return mapToFintObjects(subTypesOf);
     }
 
-    private Map<String, FintObject> mapToFintObjects(Set<Class<? extends no.fint.model.FintObject>> subTypes) {
+    private Map<String, FintObject> mapToFintObjects(Set<Class<? extends no.novari.fint.model.FintObject>> subTypes) {
         return subTypes.stream()
                 .collect(Collectors.toMap(
                         Class::getName,
                         clazz -> new FintObject(clazz, hasUniqueName(clazz))));
     }
 
-    private void gatherNameCounts(Set<Class<? extends no.fint.model.FintObject>> subTypes) {
+    private void gatherNameCounts(Set<Class<? extends no.novari.fint.model.FintObject>> subTypes) {
         subTypes.forEach(clazz -> {
             String simpleName = clazz.getSimpleName();
             nameCounts.put(simpleName, nameCounts.getOrDefault(simpleName, 0) + 1);

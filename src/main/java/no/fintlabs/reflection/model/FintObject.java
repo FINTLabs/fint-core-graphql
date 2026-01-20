@@ -1,10 +1,10 @@
 package no.fintlabs.reflection.model;
 
 import lombok.Data;
-import no.fint.model.FintMainObject;
-import no.fint.model.FintMultiplicity;
-import no.fint.model.FintReference;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.FintMainObject;
+import no.novari.fint.model.FintMultiplicity;
+import no.novari.fint.model.FintReference;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
