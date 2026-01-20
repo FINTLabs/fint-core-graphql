@@ -15,6 +15,7 @@ import java.util.*;
 @Data
 public class FintObject {
 
+    // im so sorry for what I've done.
     private final boolean isMainObject;
     private final boolean isAbstract;
     private final boolean isCommon;
@@ -72,7 +73,7 @@ public class FintObject {
 
     private String setDomainName() {
         String[] split = packageName.split("\\.");
-        return split[3].substring(0, 1).toUpperCase() + split[3].substring(1);
+        return split[4].substring(0, 1).toUpperCase() + split[4].substring(1);
     }
 
     // TODO: CT-1136: Add interface for relations

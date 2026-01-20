@@ -39,7 +39,7 @@ public class ReflectionService {
     }
 
     private Map<String, FintObject> createFintObjects() {
-        Set<Class<? extends no.novari.fint.model.FintObject>> subTypesOf = new Reflections("no.fint.model")
+        Set<Class<? extends no.novari.fint.model.FintObject>> subTypesOf = new Reflections("no.novari.fint.model")
                 .getSubTypesOf(no.novari.fint.model.FintObject.class);
         gatherNameCounts(subTypesOf);
         return mapToFintObjects(subTypesOf);
