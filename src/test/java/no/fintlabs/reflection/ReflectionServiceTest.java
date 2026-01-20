@@ -17,7 +17,7 @@ class ReflectionServiceTest {
 
     @Test
     void getFintObjectExists() {
-        assertDoesNotThrow(() -> reflectionService.getFintObject("no.fint.model.utdanning.elev.Elev"));
+        assertDoesNotThrow(() -> reflectionService.getFintObject("no.novari.fint.model.utdanning.elev.Elev"));
     }
 
     @Test
