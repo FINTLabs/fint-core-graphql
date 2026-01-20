@@ -30,11 +30,11 @@ dependencies {
     implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-x86_64'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
 
-    implementation "no.fint:fint-utdanning-model-java:${FINT_Version}"
-    implementation "no.fint:fint-administrasjon-model-java:${FINT_Version}"
-    implementation "no.fint:fint-arkiv-model-java:${FINT_Version}"
-    implementation "no.fint:fint-okonomi-model-java:${FINT_Version}"
-    implementation "no.fint:fint-personvern-model-java:${FINT_Version}"
+    implementation "no.novari:fint-utdanning-model-java:${FINT_Version}"
+    implementation "no.novari:fint-administrasjon-model-java:${FINT_Version}"
+    implementation "no.novari:fint-arkiv-model-java:${FINT_Version}"
+    implementation "no.novari:fint-okonomi-model-java:${FINT_Version}"
+    implementation "no.novari:fint-personvern-model-java:${FINT_Version}"
     implementation "no.fintlabs:fint-core-resource-server-security:2.0.0"
 
     implementation 'com.graphql-java:graphql-java:21.3'
