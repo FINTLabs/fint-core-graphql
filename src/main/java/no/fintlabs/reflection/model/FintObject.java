@@ -1,10 +1,10 @@
 package no.fintlabs.reflection.model;
 
 import lombok.Data;
-import no.fint.model.FintMainObject;
-import no.fint.model.FintMultiplicity;
-import no.fint.model.FintReference;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.FintMainObject;
+import no.novari.fint.model.FintMultiplicity;
+import no.novari.fint.model.FintReference;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -15,6 +15,7 @@ import java.util.*;
 @Data
 public class FintObject {
 
+    // im so sorry for what I've done.
     private final boolean isMainObject;
     private final boolean isAbstract;
     private final boolean isCommon;
@@ -47,7 +48,7 @@ public class FintObject {
 
     private String setComponentUri(Class<?> clazz) {
         String[] parts = clazz.getName().split("\\.");
-        return "/" + String.join("/", Arrays.copyOfRange(parts, 3, 5));
+        return "/" + String.join("/", Arrays.copyOfRange(parts, 4, 6));
     }
 
     private String setResourceUrl(Class<?> clazz) {
@@ -72,7 +73,7 @@ public class FintObject {
 
     private String setDomainName() {
         String[] split = packageName.split("\\.");
-        return split[3].substring(0, 1).toUpperCase() + split[3].substring(1);
+        return split[4].substring(0, 1).toUpperCase() + split[4].substring(1);
     }
 
     // TODO: CT-1136: Add interface for relations

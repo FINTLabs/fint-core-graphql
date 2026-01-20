@@ -20,7 +20,7 @@ public class EndPointServiceTest {
 
     @Test
     public void getEndpoint() {
-        Set<String> endpoints = endpointService.getEndpoints("no.fint.model.felles.Person");
+        Set<String> endpoints = endpointService.getEndpoints("no.novari.fint.model.felles.Person");
         assertTrue(endpoints.contains("/utdanning/elev/person"));
     }
 
